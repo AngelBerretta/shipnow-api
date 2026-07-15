@@ -1,0 +1,18 @@
+***REMOVED*** Dependencias
+node_modules/
+
+***REMOVED*** Variables de entorno
+.env
+.env.local
+
+***REMOVED*** Logs
+npm-debug.log*
+logs/
+*.log
+
+***REMOVED*** Sistema
+.DS_Store
+
+***REMOVED*** Editor
+.vscode/
+.idea/

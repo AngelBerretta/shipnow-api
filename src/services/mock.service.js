@@ -142,7 +142,6 @@ class MockService {
     for (let i = 0; i < count; i += 1) {
       const role = SEED_ROLE_CYCLE[i % SEED_ROLE_CYCLE.length];
       const payload = mockGenerator.generateMockUser({ role });
-      // eslint-disable-next-line no-await-in-loop
       const newUser = await userService.createUser(payload);
       created.push(newUser);
     }
@@ -172,7 +171,6 @@ class MockService {
         deliveryAddress: mockGenerator.buildFakeAddress(),
         priority: mockGenerator.randomPriority(),
       };
-      // eslint-disable-next-line no-await-in-loop
       const { order } = await orderService.createOrder(payload);
       created.push(order);
     }
@@ -227,7 +225,6 @@ class MockService {
         driver: driver._id,
         priority: mockGenerator.randomPriority(),
       };
-      // eslint-disable-next-line no-await-in-loop
       const newDelivery = await deliveryService.createDelivery(payload);
       created.push(newDelivery);
     }

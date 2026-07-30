@@ -4,8 +4,7 @@
  * middleware decide el status code y el formato de respuesta.
  * Debe registrarse SIEMPRE al final de la cadena de middlewares en app.js.
  */
-// eslint-disable-next-line no-unused-vars
-export function errorHandler(error, req, res, next) {
+export function errorHandler(error, req, res, _next) {
   const statusCode = error.statusCode || 500;
   const message = error.message || 'Error interno del servidor';
 

@@ -1,6 +1,6 @@
 import productRepository from '../repositories/product.repository.js';
-import ApiError from '../utils/ApiError.js';
 import { PRODUCT_STATUS } from '../constants/index.js';
+import { ProductNotFoundError, ValidationError } from '../errors/index.js';
 
 class ProductService {
   async getAllProducts(query = {}) {
@@ -13,20 +13,20 @@ class ProductService {
   async getProductById(id) {
     const product = await productRepository.findById(id);
     if (!product) {
-      throw new ApiError(404, 'Producto no encontrado');
+      throw new ProductNotFoundError();
     }
     return product;
   }
 
   async createProduct({ name, description, price, stock, category, status }) {
     if (!name || price === undefined || stock === undefined) {
-      throw new ApiError(400, 'Faltan datos obligatorios (name, price, stock)');
+      throw new ValidationError('Faltan datos obligatorios (name, price, stock)');
     }
     if (price < 0) {
-      throw new ApiError(400, 'El precio no puede ser negativo');
+      throw new ValidationError('El precio no puede ser negativo');
     }
     if (stock < 0) {
-      throw new ApiError(400, 'El stock no puede ser negativo');
+      throw new ValidationError('El stock no puede ser negativo');
     }
 
     return productRepository.create({
@@ -42,14 +42,14 @@ class ProductService {
   async updateProduct(id, { name, description, price, stock, category, status }) {
     const product = await productRepository.findById(id);
     if (!product) {
-      throw new ApiError(404, 'Producto no encontrado');
+      throw new ProductNotFoundError();
     }
 
     if (price !== undefined && price < 0) {
-      throw new ApiError(400, 'El precio no puede ser negativo');
+      throw new ValidationError('El precio no puede ser negativo');
     }
     if (stock !== undefined && stock < 0) {
-      throw new ApiError(400, 'El stock no puede ser negativo');
+      throw new ValidationError('El stock no puede ser negativo');
     }
 
     const updateData = {};
@@ -71,7 +71,7 @@ class ProductService {
   async deleteProduct(id) {
     const deleted = await productRepository.deleteById(id);
     if (!deleted) {
-      throw new ApiError(404, 'Producto no encontrado');
+      throw new ProductNotFoundError();
     }
     return deleted;
   }

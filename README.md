@@ -49,8 +49,9 @@ src/
 ├── services/          ***REMOVED*** Lógica de negocio (incluye mock.service.js)
 ├── controllers/       ***REMOVED*** Única puerta de entrada HTTP (req/res)
 ├── routes/            ***REMOVED*** Solo conectan path + método HTTP con el Controller
+├── errors/            ***REMOVED*** Capa de manejo de errores (codigos, diccionario, clases de dominio)
 ├── middlewares/       ***REMOVED*** Manejo central de errores y 404
-├── utils/             ***REMOVED*** Helpers puros (ApiError, mock.generator.js)
+├── utils/             ***REMOVED*** Helpers puros (mock.generator.js)
 ├── app.js             ***REMOVED*** Configuración de Express y montaje de rutas
 └── server.js          ***REMOVED*** Composition root: conecta a Mongo y levanta el server
 ```
@@ -84,6 +85,92 @@ Mantener esta separación permite:
   proyecciones y filtros por defecto (por ejemplo, `UserRepository` nunca
   devuelve el campo `password`), en vez de ser un `return Model.find()`
   desnudo.
+
+***REMOVED******REMOVED*** Manejo centralizado de errores
+
+Ninguna ruta ni controller arma una respuesta de error a mano. El flujo es
+siempre el mismo:
+
+```
+Service detecta el problema → throw <ErrorDeDominio>
+Controller → catch (error) { next(error) }        (nunca responde el error el mismo)
+Middleware global (errorHandler) → arma la respuesta HTTP final
+```
+
+Vive en dos carpetas:
+
+```
+src/
+├── errors/
+│   ├── errorCodes.js        ***REMOVED*** Enum de codigos de error (VALIDATION_ERROR, USER_NOT_FOUND, ...)
+│   ├── errorDictionary.js   ***REMOVED*** codigo -> { statusCode, message por defecto }
+│   ├── ApiError.js          ***REMOVED*** Clase base: toda excepcion de dominio nace de un codigo del diccionario
+│   ├── notFound.errors.js   ***REMOVED*** UserNotFoundError, OrderNotFoundError, DeliveryNotFoundError, ProductNotFoundError
+│   ├── conflict.errors.js   ***REMOVED*** DuplicateEmailError, OrderAlreadyProcessedError, OrderAlreadyDeliveredError, DeliveryAlreadyCompletedError
+│   ├── mock.errors.js       ***REMOVED*** InvalidMockQuantityError, MockGenerationError
+│   ├── ValidationError.js / InvalidStatusError.js / InvalidRoleError.js / ForbiddenActionError.js
+│   └── index.js             ***REMOVED*** Barrel: unico punto de import para el resto de la app
+└── middlewares/
+    └── errorHandler.js      ***REMOVED*** errorHandler (siempre al final de app.js) + notFoundHandler (404 de ruta)
+```
+
+***REMOVED******REMOVED******REMOVED*** Por que un diccionario en vez de un `statusCode` en cada `throw`
+
+Antes, cada Service decidia el status HTTP a mano: `new ApiError(404, 'Usuario no encontrado')`,
+`new ApiError(409, 'El email ya esta registrado')`, repitiendo el numero y el mensaje en cada
+lugar que necesitaba lanzar ese error. Ahora `ERROR_DICTIONARY` es la unica fuente de verdad
+sobre "que status y que mensaje por defecto le corresponde a cada codigo", y las clases de
+`src/errors/` son atajos con nombre para lanzar esos codigos (`throw new UserNotFoundError()`).
+Sumar un caso de error nuevo es: (1) agregar la constante en `errorCodes.js`, (2) agregar su
+entrada en `errorDictionary.js`, (3) opcionalmente crear una clase con nombre en `src/errors/`
+para que el Service no tenga que conocer el codigo exacto.
+
+***REMOVED******REMOVED******REMOVED*** Formato de respuesta
+
+Toda respuesta de error de la API (400, 403, 404, 409, 500) tiene la misma forma:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ORDER_ALREADY_PROCESSED",
+    "message": "El pedido ya fue asignado o procesado (estado actual: assigned)",
+    "details": { "currentStatus": "assigned" }
+  }
+}
+```
+
+`details` es opcional: solo aparece cuando el error tiene informacion adicional util para el
+cliente (valores permitidos de un estado invalido, el campo que fallo una validacion, etc.).
+
+***REMOVED******REMOVED******REMOVED*** Errores que el middleware traduce aunque no los haya lanzado un Service
+
+`errorHandler` tambien normaliza errores "externos" que Mongoose o Express pueden tirar antes
+de que la logica de negocio llegue a evaluarse, para que la respuesta sea igual de uniforme:
+
+| Origen | Ejemplo | Se traduce a |
+|---|---|---|
+| Mongoose `CastError` | `GET /api/orders/123` (ID con formato invalido) | `400 INVALID_ID` |
+| Mongoose `ValidationError` de esquema | Falta un campo requerido que el Service no llego a chequear | `400 VALIDATION_ERROR` con el detalle de cada campo |
+| MongoDB `E11000` (clave duplicada) | Condicion de carrera con el mismo email | `409 DUPLICATE_EMAIL` / `409 DUPLICATE_KEY` |
+| `express.json()` | Body con JSON malformado | `400 MALFORMED_JSON` |
+| Cualquier otro error no reconocido | Bug o falla inesperada | `500 INTERNAL_ERROR` (se loguea completo en el servidor, nunca se expone el detalle interno al cliente) |
+
+***REMOVED******REMOVED******REMOVED*** Validaciones del módulo de mocks
+
+`mock.service.js` usa la misma capa de errores para sus dos responsabilidades:
+
+- **Cantidad invalida** (`count`, `users`, `orders`, `deliveries`): si el valor no es numerico o
+  es negativo, se rechaza con `400 INVALID_MOCK_QUANTITY`, indicando en `details` cual parametro
+  fallo y que valor se recibio. Un valor valido mayor al maximo permitido no es un error: se
+  recorta (`clamp`) al tope, como ya hacia antes.
+- **Rol invalido** en `/api/mocks/users?role=...`: `400 INVALID_ROLE`.
+- **Fallas durante la carga en MongoDB** (`POST /api/mocks/generate`): si algo inesperado
+  interrumpe el seeding (conexion caida, error de escritura no controlado, etc.), no se deja
+  escapar el error crudo de Mongoose: se loguea completo en el servidor y se responde
+  `500 MOCK_GENERATION_FAILED` con un mensaje controlado. Si en cambio la falla es una regla de
+  negocio ya controlada (por ejemplo, `400 VALIDATION_ERROR` porque no hay usuarios "customer"
+  para asociar pedidos), ese error se propaga tal cual, sin envolverlo.
 
 ***REMOVED******REMOVED*** Variables de entorno
 

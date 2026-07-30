@@ -1,8 +1,16 @@
 import deliveryRepository from '../repositories/delivery.repository.js';
 import orderRepository from '../repositories/order.repository.js';
 import userRepository from '../repositories/user.repository.js';
-import ApiError from '../utils/ApiError.js';
 import { ROLES, ORDER_STATUS, DELIVERY_STATUS, PRIORITY } from '../constants/index.js';
+import {
+  DeliveryNotFoundError,
+  OrderNotFoundError,
+  UserNotFoundError,
+  ValidationError,
+  InvalidStatusError,
+  OrderAlreadyProcessedError,
+  DeliveryAlreadyCompletedError,
+} from '../errors/index.js';
 
 class DeliveryService {
   async getAllDeliveries() {
@@ -12,34 +20,34 @@ class DeliveryService {
   async getDeliveryById(id) {
     const delivery = await deliveryRepository.findById(id);
     if (!delivery) {
-      throw new ApiError(404, 'Entrega no encontrada');
+      throw new DeliveryNotFoundError();
     }
     return delivery;
   }
 
   async createDelivery({ order, driver, priority }) {
     if (!order) {
-      throw new ApiError(400, 'El pedido es obligatorio');
+      throw new ValidationError('El pedido es obligatorio');
     }
     if (!driver) {
-      throw new ApiError(400, 'El repartidor es obligatorio');
+      throw new ValidationError('El repartidor es obligatorio');
     }
 
     const existingOrder = await orderRepository.findById(order);
     if (!existingOrder) {
-      throw new ApiError(404, 'El pedido no existe');
+      throw new OrderNotFoundError('El pedido no existe');
     }
 
     const existingDriver = await userRepository.findById(driver);
     if (!existingDriver) {
-      throw new ApiError(404, 'El repartidor no existe');
+      throw new UserNotFoundError('El repartidor no existe');
     }
     if (existingDriver.role !== ROLES.DRIVER) {
-      throw new ApiError(400, `El usuario no tiene rol de repartidor (rol actual: ${existingDriver.role})`);
+      throw new ValidationError(`El usuario no tiene rol de repartidor (rol actual: ${existingDriver.role})`);
     }
 
     if (existingOrder.status !== ORDER_STATUS.CREATED) {
-      throw new ApiError(409, `El pedido ya fue asignado o procesado (estado actual: ${existingOrder.status})`);
+      throw new OrderAlreadyProcessedError(existingOrder.status);
     }
 
     const newDelivery = await deliveryRepository.create({
@@ -62,18 +70,18 @@ class DeliveryService {
 
   async updateDeliveryStatus(id, status) {
     if (!status) {
-      throw new ApiError(400, 'El estado es obligatorio');
+      throw new ValidationError('El estado es obligatorio');
     }
     if (!Object.values(DELIVERY_STATUS).includes(status)) {
-      throw new ApiError(400, `Estado invalido. Valores permitidos: ${Object.values(DELIVERY_STATUS).join(', ')}`);
+      throw new InvalidStatusError(status, Object.values(DELIVERY_STATUS));
     }
 
     const delivery = await deliveryRepository.findById(id);
     if (!delivery) {
-      throw new ApiError(404, 'Entrega no encontrada');
+      throw new DeliveryNotFoundError();
     }
     if (delivery.status === DELIVERY_STATUS.DELIVERED) {
-      throw new ApiError(409, 'La entrega ya fue completada');
+      throw new DeliveryAlreadyCompletedError();
     }
 
     const updateData = { status };
@@ -95,7 +103,7 @@ class DeliveryService {
   async deleteDelivery(id) {
     const deleted = await deliveryRepository.deleteById(id);
     if (!deleted) {
-      throw new ApiError(404, 'Entrega no encontrada');
+      throw new DeliveryNotFoundError();
     }
     return deleted;
   }

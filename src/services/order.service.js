@@ -1,7 +1,14 @@
 import orderRepository from '../repositories/order.repository.js';
 import userRepository from '../repositories/user.repository.js';
-import ApiError from '../utils/ApiError.js';
 import { ROLES, ORDER_STATUS, PRIORITY } from '../constants/index.js';
+import {
+  OrderNotFoundError,
+  UserNotFoundError,
+  ValidationError,
+  InvalidStatusError,
+  ForbiddenActionError,
+  OrderAlreadyDeliveredError,
+} from '../errors/index.js';
 
 const SHIPPING_COST_PER_UNIT = 10;
 
@@ -13,28 +20,28 @@ class OrderService {
   async getOrderById(id) {
     const order = await orderRepository.findById(id);
     if (!order) {
-      throw new ApiError(404, 'Pedido no encontrado');
+      throw new OrderNotFoundError();
     }
     return order;
   }
 
   async createOrder({ customer, items, deliveryAddress, priority }) {
     if (!customer) {
-      throw new ApiError(400, 'Falta el cliente');
+      throw new ValidationError('Falta el cliente');
     }
     if (!items || items.length === 0) {
-      throw new ApiError(400, 'Faltan los items del pedido');
+      throw new ValidationError('Faltan los items del pedido');
     }
     if (!deliveryAddress) {
-      throw new ApiError(400, 'Falta la direccion');
+      throw new ValidationError('Falta la direccion');
     }
 
     const user = await userRepository.findById(customer);
     if (!user) {
-      throw new ApiError(404, 'El usuario no existe');
+      throw new UserNotFoundError('El usuario no existe');
     }
     if (user.role === ROLES.DRIVER) {
-      throw new ApiError(403, 'Los repartidores no pueden crear pedidos');
+      throw new ForbiddenActionError('Los repartidores no pueden crear pedidos');
     }
 
     const total = this.***REMOVED***calculateTotal(items);
@@ -57,18 +64,18 @@ class OrderService {
 
   async updateOrderStatus(id, status) {
     if (!status) {
-      throw new ApiError(400, 'El estado es obligatorio');
+      throw new ValidationError('El estado es obligatorio');
     }
     if (!Object.values(ORDER_STATUS).includes(status)) {
-      throw new ApiError(400, `Estado invalido. Valores permitidos: ${Object.values(ORDER_STATUS).join(', ')}`);
+      throw new InvalidStatusError(status, Object.values(ORDER_STATUS));
     }
 
     const order = await orderRepository.findById(id);
     if (!order) {
-      throw new ApiError(404, 'Pedido no encontrado');
+      throw new OrderNotFoundError();
     }
     if (order.status === ORDER_STATUS.DELIVERED) {
-      throw new ApiError(409, 'El pedido ya fue entregado');
+      throw new OrderAlreadyDeliveredError();
     }
 
     const updatedOrder = await orderRepository.updateById(id, { status });
@@ -79,7 +86,7 @@ class OrderService {
   async deleteOrder(id) {
     const deleted = await orderRepository.deleteById(id);
     if (!deleted) {
-      throw new ApiError(404, 'Pedido no encontrado');
+      throw new OrderNotFoundError();
     }
     return deleted;
   }

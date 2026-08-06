@@ -7,7 +7,8 @@ node_modules/
 
 ***REMOVED*** Logs
 npm-debug.log*
-logs/
+logs/*
+!logs/.gitkeep
 *.log
 
 ***REMOVED*** Sistema

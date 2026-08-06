@@ -5,6 +5,7 @@ import orderService from './order.service.js';
 import deliveryService from './delivery.service.js';
 import { ROLES, ORDER_STATUS } from '../constants/index.js';
 import * as mockGenerator from '../utils/mock.generator.js';
+import logger from '../config/logger.config.js';
 import {
   ApiError,
   ValidationError,
@@ -61,17 +62,20 @@ class MockService {
     if (role && !Object.values(ROLES).includes(role)) {
       throw new InvalidRoleError(role, Object.values(ROLES));
     }
-
+    
+    logger.debug(`Generando preview de ${n} usuario(s) mock${role ? ` (rol: ${role})` : ''}`);
     return Array.from({ length: n }, () => mockGenerator.generateMockUser({ role }));
   }
 
   previewOrders(count) {
     const n = this.***REMOVED***parseCount(count, 10, MAX_PREVIEW_COUNT, 'count');
+    logger.debug(`Generando preview de ${n} pedido(s) mock`);
     return Array.from({ length: n }, () => mockGenerator.generateMockOrder());
   }
 
   previewDeliveries(count) {
     const n = this.***REMOVED***parseCount(count, 10, MAX_PREVIEW_COUNT, 'count');
+    logger.debug(`Generando preview de ${n} entrega(s) mock`);
     return Array.from({ length: n }, () => mockGenerator.generateMockDelivery());
   }
 
@@ -84,6 +88,10 @@ class MockService {
     const usersCount = this.***REMOVED***parseCount(users, 5, MAX_PREVIEW_COUNT, 'users');
     const ordersCount = this.***REMOVED***parseCount(orders, 5, MAX_PREVIEW_COUNT, 'orders');
     const deliveriesCount = this.***REMOVED***parseCount(deliveries, 5, MAX_PREVIEW_COUNT, 'deliveries');
+
+    logger.debug(
+      `Generando preview de dataset completo (users: ${usersCount}, orders: ${ordersCount}, deliveries: ${deliveriesCount})`
+    );
 
     const mockUsers = Array.from({ length: usersCount }, (_, index) =>
       mockGenerator.generateMockUser({ role: SEED_ROLE_CYCLE[index % SEED_ROLE_CYCLE.length] })
@@ -125,10 +133,18 @@ class MockService {
 
     const warnings = [];
 
+    logger.info(
+      `Iniciando carga de datos de prueba en MongoDB (users: ${usersCount}, orders: ${ordersCount}, deliveries: ${deliveriesCount})`
+    );
+
     try {
       const createdUsers = await this.***REMOVED***seedUsers(usersCount);
       const createdOrders = await this.***REMOVED***seedOrders(ordersCount, createdUsers, warnings);
       const createdDeliveries = await this.***REMOVED***seedDeliveries(deliveriesCount, createdUsers, createdOrders, warnings);
+
+      logger.info(
+        `Carga de datos de prueba finalizada: ${createdUsers.length} usuario(s), ${createdOrders.length} pedido(s), ${createdDeliveries.length} entrega(s) creados`
+      );
 
       return {
         summary: {
@@ -155,7 +171,9 @@ class MockService {
       // escritura no controlado) se loguea completa server-side y se
       // traduce a una respuesta controlada en vez de dejar que un error
       // crudo de Mongoose/MongoDB llegue sin traducir al cliente.
-      console.error('[mock.service] Fallo inesperado al cargar datos de prueba en MongoDB:', error);
+      logger.error(`Fallo inesperado al cargar datos de prueba en MongoDB: ${error.message}`, {
+        stack: error.stack,
+      });
       throw new MockGenerationError(
         'No se pudieron cargar los datos de prueba en MongoDB. Intenta nuevamente en unos segundos.'
       );
@@ -204,7 +222,9 @@ class MockService {
     }
 
     if (customers.length === 1) {
-      warnings.push('Todos los pedidos se asociaron al unico usuario "customer" disponible.');
+      const message = 'Todos los pedidos se asociaron al unico usuario "customer" disponible.';
+      warnings.push(message);
+      logger.warning(message);
     }
 
     return created;
@@ -218,9 +238,10 @@ class MockService {
       drivers = await userRepository.findAll({ role: ROLES.DRIVER });
     }
     if (drivers.length === 0) {
-      warnings.push(
-        'No se crearon entregas: no hay usuarios con rol "driver" disponibles. Genera usuarios primero (parametro "users" > 0).'
-      );
+      const message =
+        'No se crearon entregas: no hay usuarios con rol "driver" disponibles. Genera usuarios primero (parametro "users" > 0).';
+      warnings.push(message);
+      logger.warning(message);
       return [];
     }
 
@@ -238,9 +259,9 @@ class MockService {
 
     let deliveriesToCreate = count;
     if (deliveriesToCreate > eligibleOrders.length) {
-      warnings.push(
-        `Se solicitaron ${count} entregas pero solo hay ${eligibleOrders.length} pedido(s) en estado "created" disponibles para asignar. Se crearon ${eligibleOrders.length}.`
-      );
+      const message = `Se solicitaron ${count} entregas pero solo hay ${eligibleOrders.length} pedido(s) en estado "created" disponibles para asignar. Se crearon ${eligibleOrders.length}.`;
+      warnings.push(message);
+      logger.warning(message);
       deliveriesToCreate = eligibleOrders.length;
     }
 

@@ -1,6 +1,7 @@
 import orderRepository from '../repositories/order.repository.js';
 import userRepository from '../repositories/user.repository.js';
 import { ROLES, ORDER_STATUS, PRIORITY } from '../constants/index.js';
+import logger from '../config/logger.config.js';
 import {
   OrderNotFoundError,
   UserNotFoundError,
@@ -55,6 +56,8 @@ class OrderService {
       status: ORDER_STATUS.CREATED,
     });
 
+    logger.info(`Pedido ${newOrder._id} creado correctamente (cliente: ${customer}, total: $${total})`);
+
     this.***REMOVED***sendOrderConfirmationEmail(customer, newOrder._id, total);
 
     const shippingCost = this.***REMOVED***calculateShippingCost(newOrder.items);
@@ -79,7 +82,7 @@ class OrderService {
     }
 
     const updatedOrder = await orderRepository.updateById(id, { status });
-    console.log(`Pedido ${updatedOrder._id} actualizado a estado: ${status}`);
+    logger.info(`Pedido ${updatedOrder._id} actualizado a estado: ${status}`);
     return updatedOrder;
   }
 
@@ -101,8 +104,10 @@ class OrderService {
 
   ***REMOVED***sendOrderConfirmationEmail(customerId, orderId, total) {
     // Simulacion de envio de email (se reemplazaria por un EmailService real).
-    console.log(`[EMAIL SIMULADO] Enviando confirmacion al usuario ${customerId}...`);
-    console.log(`[EMAIL SIMULADO] Tu pedido ${orderId} fue creado. Total: $${total}`);
+    // Nivel "debug": es un detalle de implementacion (aun simulado, no
+    // pega a un proveedor real), solo relevante durante el desarrollo.
+    logger.debug(`[EMAIL SIMULADO] Enviando confirmacion al usuario ${customerId}...`);
+    logger.debug(`[EMAIL SIMULADO] Tu pedido ${orderId} fue creado. Total: $${total}`);
   }
 }
 

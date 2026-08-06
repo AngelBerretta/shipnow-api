@@ -4,6 +4,8 @@ API de logística de ShipNow, refactorizada a una arquitectura profesional
 por capas (**Controller → Service → Repository**) con configuración de
 entorno validada al arranque.
 
+> 📋 **Este proyecto usa [Winston](https://github.com/winstonjs/winston) para logging** — ver sección [Sistema de logging](***REMOVED***sistema-de-logging).
+
 ***REMOVED******REMOVED*** Instalación y ejecución local
 
 1. Clonar el repositorio e instalar dependencias:
@@ -42,7 +44,7 @@ intentar usarla.
 
 ```
 src/
-├── config/          ***REMOVED*** Configuración de entorno (única fuente de process.env)
+├── config/          ***REMOVED*** Configuración de entorno y logger (Winston)
 ├── constants/        ***REMOVED*** Diccionario de roles y estados (Object.freeze)
 ├── models/            ***REMOVED*** Esquemas de Mongoose (sin lógica de negocio)
 ├── repositories/     ***REMOVED*** Único lugar que conoce Mongoose/MongoDB
@@ -172,6 +174,154 @@ de que la logica de negocio llegue a evaluarse, para que la respuesta sea igual 
   negocio ya controlada (por ejemplo, `400 VALIDATION_ERROR` porque no hay usuarios "customer"
   para asociar pedidos), ese error se propaga tal cual, sin envolverlo.
 
+***REMOVED******REMOVED*** Sistema de logging
+
+ShipNow reemplaza el uso de `console.log`/`console.error` sueltos por un
+logger centralizado construido sobre **Winston**, integrado con la capa de
+manejo de errores y con persistencia en archivos rotados.
+
+```
+src/config/
+└── logger.config.js   ***REMOVED*** Unica configuracion de Winston de todo el proyecto
+```
+
+Ningún otro archivo crea una instancia propia de `winston.createLogger()`:
+todos importan el logger ya configurado desde `src/config/logger.config.js`
+(o desde el barrel `src/config/index.js`, como `{ logger }`).
+
+***REMOVED******REMOVED******REMOVED*** Niveles de log
+
+Se definieron 6 niveles personalizados (no los niveles npm por defecto de
+Winston), de más a menos severo:
+
+| Nivel | Severidad | Uso en ShipNow |
+|---|---|---|
+| `fatal` | 0 (máxima) | Fallas que impiden que la app funcione (ej: no se pudo conectar a MongoDB al arrancar) |
+| `error` | 1 | Errores inesperados o de servidor (5xx) que el servidor logra responder igual |
+| `warning` | 2 | Errores de negocio esperados (4xx): validaciones, recursos no encontrados, conflictos, rutas inexistentes |
+| `info` | 3 | Eventos normales y exitosos: arranque del servidor, conexión a Mongo, creación de pedidos/entregas, resultado de un seed de mocks |
+| `http` | 4 | Reservado para tráfico HTTP (usado hoy solo por el endpoint de prueba del logger) |
+| `debug` | 5 (mínima) | Detalle de desarrollo: simulación de envío de email, generación de datos mock en memoria (preview) |
+
+***REMOVED******REMOVED******REMOVED*** Comportamiento según el entorno
+
+El nivel mínimo que efectivamente se registra depende de `NODE_ENV`
+(variable ya validada por `src/config/env.config.js`, ver sección
+[Variables de entorno](***REMOVED***variables-de-entorno)):
+
+| `NODE_ENV` | Nivel mínimo | Niveles visibles |
+|---|---|---|
+| `development` | `debug` | Todos: `debug, http, info, warning, error, fatal` |
+| `production` | `info` | `info, warning, error, fatal` (se ocultan `debug` y `http`, más ruidosos y de menor valor fuera de desarrollo) |
+| `test` | `warning` | `warning, error, fatal` |
+
+Esto aplica tanto a la consola como al archivo `combined-*.log`. El archivo
+`error-*.log`, en cambio, **siempre** registra únicamente `error` y `fatal`,
+sin importar el entorno (ver más abajo).
+
+***REMOVED******REMOVED******REMOVED*** Integración con el manejo de errores
+
+El middleware global (`src/middlewares/errorHandler.js`) usa el logger para
+dejar registro de cada error que pasa por él, sin cambiar la respuesta HTTP
+que recibe el cliente:
+
+- Errores de negocio (4xx: `ValidationError`, `*NotFoundError`, conflictos
+  409, ruta inexistente) → se registran como **`warning`**.
+- Errores de servidor (5xx, reconocidos o no) → se registran como
+  **`error`**, incluyendo el stack trace completo.
+- Fallas críticas de arranque (ej: no se pudo conectar a MongoDB) → se
+  registran como **`fatal`** en `src/server.js`, antes de que el proceso
+  termine con `process.exit(1)`.
+
+El logger **complementa** el manejo de errores, no lo reemplaza: la
+respuesta al cliente sigue siendo siempre la misma estructura uniforme
+descrita en la sección anterior, se haya podido loguear o no.
+
+***REMOVED******REMOVED******REMOVED*** Persistencia en archivos y rotación
+
+Los logs se persisten en la carpeta `logs/` (creada automáticamente al
+arrancar la app si no existe), usando `winston-daily-rotate-file`:
+
+```
+logs/
+├── .gitkeep                      ***REMOVED*** unico archivo versionado en Git
+├── combined-YYYY-MM-DD.log       ***REMOVED*** todos los niveles que pasen el filtro del entorno
+├── error-YYYY-MM-DD.log          ***REMOVED*** SOLO niveles error y fatal, sin importar el entorno
+└── error-YYYY-MM-DD.log.N.gz     ***REMOVED*** archivos rotados y comprimidos automaticamente
+```
+
+Política de rotación:
+
+| Archivo | Rota por fecha | Rota por tamaño | Retención | Compresión |
+|---|---|---|---|---|
+| `error-*.log` | Un archivo por día | Sí, al superar 20MB (`error-YYYY-MM-DD.log.1`, `.log.2`, ...) | 30 días | Los archivos rotados se comprimen a `.gz` |
+| `combined-*.log` | Un archivo por día | Sí, al superar 20MB | 14 días | Los archivos rotados se comprimen a `.gz` |
+
+> **Nota:** el nombre de archivo incluye la fecha (`error-2026-08-01.log`),
+> a diferencia de un nombre fijo como `error.log`. Es el comportamiento
+> esperado de la rotación por fecha: el contenido —solo `error`/`fatal`—
+> se mantiene igual sin importar el nombre exacto del archivo del día.
+
+***REMOVED******REMOVED******REMOVED*** Qué se ignora en Git
+
+```gitignore
+logs/*
+!logs/.gitkeep
+*.log
+```
+
+Solo `logs/.gitkeep` se versiona (documenta que la carpeta existe y es
+parte del diseño del proyecto). Todo el resto del contenido de `logs/`
+—incluidos los `.log`, `.log.N` y `.log.N.gz`— se genera en tiempo de
+ejecución y nunca se sube al repositorio.
+
+***REMOVED******REMOVED******REMOVED*** Endpoint de prueba del logger
+
+Existe un endpoint exclusivamente de testing interno (no representa
+ninguna funcionalidad de negocio de ShipNow) para verificar rápidamente
+que los 6 niveles funcionan en consola y en archivo:
+
+```
+GET /api/logs/test
+```
+
+```bash
+curl http://localhost:3000/api/logs/test
+```
+
+Dispara un mensaje de ejemplo en cada nivel (`debug`, `http`, `info`,
+`warning`, `error`, `fatal`) y devuelve un JSON confirmando cuáles se
+ejecutaron:
+
+```json
+{
+  "message": "Prueba de logger ejecutada. Revisa la consola y los archivos en /logs.",
+  "note": "El nivel \"fatal\" se registro sin detener el servidor, unicamente con fines de prueba.",
+  "levelsTriggered": ["debug", "http", "info", "warning", "error", "fatal"],
+  "timestamp": "2026-08-05T23:50:00.000Z"
+}
+```
+
+El nivel `fatal` se registra únicamente con fines de prueba: a diferencia
+de la falla real de conexión a MongoDB en `server.js`, este endpoint
+**no** llama a `process.exit()`, para no tumbar el servidor en cada
+prueba.
+
+Qué revisar según el entorno:
+
+```bash
+***REMOVED*** En desarrollo: deberias ver los 6 niveles en consola
+npm run dev
+curl http://localhost:3000/api/logs/test
+
+***REMOVED*** En produccion: solo deberian verse info, warning, error y fatal
+NODE_ENV=production npm start
+curl http://localhost:3000/api/logs/test
+
+***REMOVED*** El archivo de errores solo debe tener error y fatal, en cualquier entorno
+cat logs/error-$(date +%Y-%m-%d).log
+```
+
 ***REMOVED******REMOVED*** Variables de entorno
 
 | Variable      | Descripción                                   | Ejemplo                              |
@@ -208,6 +358,7 @@ de que la logica de negocio llegue a evaluarse, para que la respuesta sea igual 
 | GET    | /api/mocks/deliveries            | Simular entregas (no se guardan)|
 | GET    | /api/mocks/full                  | Simular dataset completo relacionado (no se guarda) |
 | POST   | /api/mocks/generate              | Insertar datos de prueba reales en MongoDB |
+| GET    | /api/logs/test                   | Endpoint interno de testing: dispara los 6 niveles del logger |
 
 Ver la sección [Mocking y carga de datos de prueba](***REMOVED***mocking-y-carga-de-datos-de-prueba) para el detalle de cada endpoint.
 

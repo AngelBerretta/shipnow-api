@@ -1,6 +1,7 @@
 import ApiError from '../errors/ApiError.js';
 import { ERROR_CODES } from '../errors/errorCodes.js';
 import { ERROR_DICTIONARY } from '../errors/errorDictionary.js';
+import logger from '../config/logger.config.js';
 
 /**
  * Traduce errores "externos" que todavia no son un ApiError (errores
@@ -19,7 +20,6 @@ function normalizeError(error) {
     return error;
   }
 
-  // ID con formato invalido en un parametro de ruta (ej: /api/orders/123)
   if (error.name === 'CastError' && error.kind === 'ObjectId') {
     return new ApiError(
       ERROR_CODES.INVALID_ID,
@@ -28,16 +28,11 @@ function normalizeError(error) {
     );
   }
 
-  // Validaciones de esquema de Mongoose (required, min, enum, etc.)
-  // que no llegaron a chequearse antes en el Service.
   if (error.name === 'ValidationError' && error.errors) {
     const details = Object.values(error.errors).map((fieldError) => fieldError.message);
     return new ApiError(ERROR_CODES.VALIDATION_ERROR, 'Los datos enviados no son validos', details);
   }
 
-  // Clave duplicada a nivel de base de datos (ej: email unico). Es una
-  // red de seguridad: el Service ya valida esto antes de escribir, pero
-  // una condicion de carrera podria dejar pasar dos altas simultaneas.
   if (error.code === 11000) {
     const field = Object.keys(error.keyValue || {})[0];
     if (field === 'email') {
@@ -46,8 +41,6 @@ function normalizeError(error) {
     return new ApiError(ERROR_CODES.DUPLICATE_KEY, `El valor de "${field}" ya existe`, { field });
   }
 
-  // JSON malformado en el body de la peticion (lo detecta express.json()
-  // antes de que la request llegue a ningun Router).
   if (error.type === 'entity.parse.failed') {
     return new ApiError(ERROR_CODES.MALFORMED_JSON);
   }
@@ -64,15 +57,27 @@ function normalizeError(error) {
  * el proyecto que arma la respuesta HTTP de error: ninguna ruta ni
  * controller debe hacer `res.status(...).json({ error: ... })` a mano.
  *
+ * Ademas de responder al cliente, registra cada error con Winston segun
+ * su severidad real (ver logger.config.js):
+ * - Errores de negocio (4xx): nivel "warning".
+ * - Errores de servidor (5xx), reconocidos o no: nivel "error".
+ * El logger complementa este manejo de errores, no lo reemplaza: la
+ * respuesta al cliente nunca depende de si el log se pudo escribir o no.
+ *
  * Debe registrarse SIEMPRE al final de la cadena de middlewares en app.js.
  */
 export function errorHandler(error, req, res, _next) {
   const normalized = normalizeError(error);
+  const context = `${req.method} ${req.originalUrl}`;
 
   if (!normalized) {
     // Error no reconocido: no se expone al cliente (podria filtrar
-    // detalles internos), pero se loguea completo para poder debuggear.
-    console.error('[errorHandler] Error no controlado:', error);
+    // detalles internos), pero se loguea completo -incluido el stack-
+    // para poder debuggear. Nivel "error": es un bug no anticipado,
+    // pero el servidor sigue funcionando y ya esta respondiendo.
+    logger.error(`Error no controlado en ${context}: ${error.message}`, {
+      stack: error.stack,
+    });
     const { statusCode, message } = ERROR_DICTIONARY[ERROR_CODES.INTERNAL_ERROR];
     return res.status(statusCode).json({
       success: false,
@@ -80,10 +85,18 @@ export function errorHandler(error, req, res, _next) {
     });
   }
 
-  // Los errores 5xx tambien se loguean server-side (con stack), aunque
-  // el cliente reciba el mensaje uniforme del diccionario.
+  // Los errores 5xx se loguean como "error" (con stack), aunque el
+  // cliente reciba el mensaje uniforme del diccionario. Los errores de
+  // negocio (4xx) se loguean como "warning": son parte del uso normal
+  // de la API, no fallas del servidor, pero igual vale la pena dejar
+  // rastro para poder investigar patrones (ej: muchos 404 seguidos a
+  // una misma ruta, muchos intentos de crear el mismo email duplicado).
+  const logMessage = `${context} -> ${normalized.statusCode} ${normalized.code}: ${normalized.message}`;
+
   if (normalized.statusCode >= 500) {
-    console.error('[errorHandler]', normalized);
+    logger.error(logMessage, { stack: normalized.stack });
+  } else {
+    logger.warning(logMessage);
   }
 
   const body = {
@@ -107,6 +120,7 @@ export function errorHandler(error, req, res, _next) {
  */
 export function notFoundHandler(req, res) {
   const { statusCode } = ERROR_DICTIONARY[ERROR_CODES.ROUTE_NOT_FOUND];
+  logger.warning(`Ruta no encontrada: ${req.method} ${req.originalUrl}`);
   res.status(statusCode).json({
     success: false,
     error: {

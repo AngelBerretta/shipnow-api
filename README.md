@@ -5,6 +5,8 @@ por capas (**Controller → Service → Repository**) con configuración de
 entorno validada al arranque.
 
 > 📋 **Este proyecto usa [Winston](https://github.com/winstonjs/winston) para logging** — ver sección [Sistema de logging](***REMOVED***sistema-de-logging).
+>
+> 📖 **La API está documentada con Swagger/OpenAPI** en `/api/docs` — ver sección [Documentación de la API (Swagger)](***REMOVED***documentación-de-la-api-swagger).
 
 ***REMOVED******REMOVED*** Instalación y ejecución local
 
@@ -44,8 +46,9 @@ intentar usarla.
 
 ```
 src/
-├── config/          ***REMOVED*** Configuración de entorno y logger (Winston)
+├── config/          ***REMOVED*** Configuración de entorno, logger (Winston) y Swagger
 ├── constants/        ***REMOVED*** Diccionario de roles y estados (Object.freeze)
+├── docs/              ***REMOVED*** Documentación OpenAPI (@openapi), separada de routes/
 ├── models/            ***REMOVED*** Esquemas de Mongoose (sin lógica de negocio)
 ├── repositories/     ***REMOVED*** Único lugar que conoce Mongoose/MongoDB
 ├── services/          ***REMOVED*** Lógica de negocio (incluye mock.service.js)
@@ -54,7 +57,7 @@ src/
 ├── errors/            ***REMOVED*** Capa de manejo de errores (codigos, diccionario, clases de dominio)
 ├── middlewares/       ***REMOVED*** Manejo central de errores y 404
 ├── utils/             ***REMOVED*** Helpers puros (mock.generator.js)
-├── app.js             ***REMOVED*** Configuración de Express y montaje de rutas
+├── app.js             ***REMOVED*** Configuración de Express, Swagger y montaje de rutas
 └── server.js          ***REMOVED*** Composition root: conecta a Mongo y levanta el server
 ```
 
@@ -87,6 +90,101 @@ Mantener esta separación permite:
   proyecciones y filtros por defecto (por ejemplo, `UserRepository` nunca
   devuelve el campo `password`), en vez de ser un `return Model.find()`
   desnudo.
+
+***REMOVED******REMOVED*** Documentación de la API (Swagger)
+
+Con el servidor levantado, la documentación interactiva está disponible en:
+
+```
+http://localhost:3000/api/docs
+```
+
+Desde ahí se puede ver cada endpoint agrupado por módulo y probarlo directamente
+con el botón **"Try it out"** (Swagger UI arma y ejecuta el `curl` real contra
+el servidor local).
+
+***REMOVED******REMOVED******REMOVED*** Qué está documentado
+
+Todos los endpoints montados en `app.js`, agrupados por tag:
+
+| Tag           | Cubre                                                              |
+|---------------|---------------------------------------------------------------------|
+| **Users**       | `/api/users` — alta, consulta y baja de usuarios                    |
+| **Orders**      | `/api/orders` — alta, consulta, cambio de estado y baja de pedidos  |
+| **Deliveries**  | `/api/deliveries` — alta, consulta, cambio de estado y baja de entregas |
+| **Products**    | `/api/products` — alta, consulta, actualización y baja de productos (módulo real de la API; no pedido explícitamente en el enunciado, se agregó igual para no dejar una ruta viva sin documentar) |
+| **Mocks**       | `/api/mocks` — generación de datos simulados (preview) y carga de datos de prueba reales en MongoDB (seed) |
+| **Logger**      | `/api/logs/test` — endpoint interno de validación del logger (aclarado explícitamente como herramienta de testing, no funcionalidad de negocio) |
+
+Cada endpoint documenta método HTTP, ruta, parámetros de ruta/query (cuando
+aplica), el `body` esperado y todas las respuestas reales (éxito y error),
+con ejemplos concretos tomados del comportamiento real de los Services (no
+hay respuestas ni errores "inventados": lo que se ve en `/api/docs` es lo que
+la API efectivamente devuelve).
+
+***REMOVED******REMOVED******REMOVED*** Schemas reutilizables
+
+En vez de repetir la forma de cada entidad en cada endpoint, `/api/docs`
+define schemas reutilizables (`components.schemas`) que se referencian con
+`$ref` en todas las rutas que los necesitan:
+
+- `User` / `UserInput` — y `UserSummary`, la versión reducida que queda
+  populada dentro de un pedido o una entrega.
+- `Order` / `OrderInput` / `OrderStatusUpdate`.
+- `Delivery` / `DeliveryInput` / `DeliveryStatusUpdate`.
+- `OrderItem` (item individual de un pedido).
+- `ErrorResponse` — forma uniforme de **toda** respuesta de error de la API
+  (ver [Manejo centralizado de errores](***REMOVED***manejo-centralizado-de-errores)),
+  con el `code` documentado como enum con los 19 códigos reales de
+  `errorCodes.js`.
+- `SuccessResponse` — respuesta genérica `{ "message": "..." }` que devuelven
+  los endpoints de baja (`DELETE`).
+- Además: `Product` / `ProductInput`, y los schemas propios del módulo de
+  mocks (`MockUser`, `MockOrder`, `MockDelivery`, `MockSeedRequest`,
+  `MockSeedResponse`).
+
+***REMOVED******REMOVED******REMOVED*** Cómo está organizado el código de la documentación
+
+La configuración de Swagger está **separada de la lógica de rutas**, en dos
+carpetas distintas:
+
+```
+src/
+├── config/
+│   └── swagger.config.js   ***REMOVED*** Arma el spec con swagger-jsdoc y expone
+│                              setupSwagger(app), la única función que
+│                              app.js llama para montar Swagger UI en
+│                              /api/docs. No conoce routes/ ni controllers/.
+└── docs/
+    ├── schemas.docs.js      ***REMOVED*** components.schemas reutilizables
+    ├── users.docs.js        ***REMOVED*** paths de /api/users (tag Users)
+    ├── orders.docs.js       ***REMOVED*** paths de /api/orders (tag Orders)
+    ├── deliveries.docs.js   ***REMOVED*** paths de /api/deliveries (tag Deliveries)
+    ├── products.docs.js     ***REMOVED*** paths de /api/products (tag Products)
+    ├── mocks.docs.js        ***REMOVED*** paths de /api/mocks (tag Mocks) + sus schemas
+    └── logs.docs.js         ***REMOVED*** path de /api/logs/test (tag Logger)
+```
+
+Los archivos de `src/docs/` **solo contienen bloques de comentarios
+`@openapi`**: no exportan nada ejecutable ni son importados por
+`src/routes/` ni por los Controllers. `swagger-jsdoc` los lee directamente
+mediante el glob `apis: ['./src/docs/*.docs.js']` configurado en
+`swagger.config.js`. `app.js` no arma la documentación: solo importa
+`setupSwagger` y la llama una vez, igual que monta cualquier otro router.
+
+***REMOVED******REMOVED******REMOVED*** Aclaraciones para probar los endpoints
+
+- La API **no implementa autenticación**: todos los endpoints de `/api/docs`
+  son de acceso libre, sin token ni API key.
+- Para probar endpoints que dependen de datos existentes (por ejemplo,
+  crear una entrega necesita un pedido en estado `created` y un usuario con
+  rol `driver`), lo más rápido es sembrar la base primero con
+  `POST /api/mocks/generate` (ver
+  [Mocking y carga de datos de prueba](***REMOVED***mocking-y-carga-de-datos-de-prueba))
+  y después copiar los `_id` reales de la respuesta.
+- Los ejemplos de error que se ven en cada endpoint (`400`, `403`, `404`,
+  `409`, `500`) son los mensajes y `code` reales que devuelve
+  `errorDictionary.js`, no texto genérico.
 
 ***REMOVED******REMOVED*** Manejo centralizado de errores
 
@@ -334,6 +432,7 @@ cat logs/error-$(date +%Y-%m-%d).log
 
 | Método | Ruta                          | Descripción                |
 |--------|-------------------------------|-----------------------------|
+| GET    | /api/docs                     | Documentación interactiva (Swagger UI) — ver [Documentación de la API (Swagger)](***REMOVED***documentación-de-la-api-swagger) |
 | GET    | /api/users                    | Listar usuarios              |
 | GET    | /api/users/:uid                | Obtener usuario por ID        |
 | POST   | /api/users                    | Crear usuario                |

@@ -8,12 +8,18 @@ import productsRouter from './routes/products.routes.js';
 import mocksRouter from './routes/mocks.routes.js';
 import logsRouter from './routes/logs.routes.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
+import { setupSwagger } from './config/swagger.config.js';
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Documentación interactiva (Swagger UI) en /api/docs.
+// Toda la configuración de Swagger vive en src/config/swagger.config.js;
+// acá solo se monta, igual que cualquier otro router.
+setupSwagger(app);
 
 // Rutas de la API
 app.use('/api/users', usersRouter);

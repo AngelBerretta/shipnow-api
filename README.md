@@ -7,6 +7,8 @@ entorno validada al arranque.
 > 📋 **Este proyecto usa [Winston](https://github.com/winstonjs/winston) para logging** — ver sección [Sistema de logging](***REMOVED***sistema-de-logging).
 >
 > 📖 **La API está documentada con Swagger/OpenAPI** en `/api/docs` — ver sección [Documentación de la API (Swagger)](***REMOVED***documentación-de-la-api-swagger).
+>
+> 🧪 **Hay una suite de tests funcionales con Mocha, Chai y Supertest** — ver sección [Testing funcional](***REMOVED***testing-funcional-mocha-chai-y-supertest).
 
 ***REMOVED******REMOVED*** Instalación y ejecución local
 
@@ -57,9 +59,20 @@ src/
 ├── errors/            ***REMOVED*** Capa de manejo de errores (codigos, diccionario, clases de dominio)
 ├── middlewares/       ***REMOVED*** Manejo central de errores y 404
 ├── utils/             ***REMOVED*** Helpers puros (mock.generator.js)
-├── app.js             ***REMOVED*** Configuración de Express, Swagger y montaje de rutas
+├── app.js             ***REMOVED*** Configuración de Express, Swagger y montaje de rutas (SIN levantar el server)
 └── server.js          ***REMOVED*** Composition root: conecta a Mongo y levanta el server
+
+test/
+├── setup.js           ***REMOVED*** Entorno de testing + conexión/limpieza de Mongo (ver Testing funcional)
+├── helpers/
+│   └── fixtures.js    ***REMOVED*** Datos de prueba controlados, creados via la propia API
+└── *.test.js          ***REMOVED*** Un archivo por módulo (users, orders, mocks, logs, docs, 404)
 ```
+
+`app.js` exporta la app de Express ya configurada pero **sin** llamar a
+`app.listen(...)` (eso vive únicamente en `server.js`). Por eso Supertest
+puede importar `app.js` directamente en los tests y hacerle peticiones sin
+abrir un puerto real.
 
 **Flujo de una petición:** `Router → Controller → Service → Repository → Mongoose`
 
@@ -627,3 +640,112 @@ Este endpoint es **aditivo**: no borra datos existentes, solo agrega. Para
 limpiar la base de prueba entre corridas, hacerlo manualmente (por ejemplo
 `mongosh` contra la base de desarrollo) — el módulo de mocking
 deliberadamente no expone un endpoint de borrado masivo.
+
+***REMOVED******REMOVED*** Testing funcional (Mocha, Chai y Supertest)
+
+***REMOVED******REMOVED******REMOVED*** Herramientas
+
+| Herramienta | Rol |
+|---|---|
+| [Mocha](https://mochajs.org/) | Organiza y ejecuta la suite (`describe`/`it`, hooks, root hooks) |
+| [Chai](https://www.chaijs.com/) | Aserciones (`expect(...)`) |
+| [Supertest](https://github.com/ladjs/supertest) | Peticiones HTTP contra la app, sin necesidad de un puerto real |
+
+Los tests importan `src/app.js` directamente (no `src/server.js`): como la
+app de Express está separada del `app.listen(...)`, Supertest le hace
+peticiones en memoria sin levantar ningún servidor.
+
+***REMOVED******REMOVED******REMOVED*** Entorno de testing separado del de desarrollo
+
+La suite usa su **propio archivo de variables de entorno** (`.env.test`,
+nunca `.env`) y su **propia base de datos MongoDB**, distinta a la de
+desarrollo/producción:
+
+1. Copiar el ejemplo:
+
+   ```bash
+   cp .env.test.example .env.test
+   ```
+
+2. Completar `.env.test` con una `MONGODB_URI` que apunte a una base
+   **exclusiva para tests** (por convención, con `_test` en el nombre —
+   puede ser una instancia local o remota, cualquiera a la que ya tengas
+   acceso):
+
+   ```env
+   PORT=3001
+   MONGODB_URI=mongodb://localhost:27017/shipnow_test
+   NODE_ENV=test
+   ```
+
+`test/setup.js` carga este archivo (con `dotenv`) **antes** de que
+cualquier test importe la app, y corta la ejecución con un error
+descriptivo si `MONGODB_URI` no está configurada o no "parece" de testing
+— para evitar por accidente correr la limpieza automática (ver más abajo)
+contra la base de desarrollo.
+
+***REMOVED******REMOVED******REMOVED*** Cómo ejecutar los tests
+
+```bash
+npm test
+```
+
+Corre toda la suite una vez y termina. También existe un modo watch para
+desarrollo:
+
+```bash
+npm run test:watch
+```
+
+La configuración de Mocha vive en `.mocharc.json` (patrón de specs,
+timeout, y la carga de `test/setup.js` vía `require` antes de cualquier
+archivo de test).
+
+***REMOVED******REMOVED******REMOVED*** Qué módulos están cubiertos
+
+| Archivo | Endpoints cubiertos |
+|---|---|
+| `test/users.test.js` | `GET /api/users`, `GET /api/users/:uid`, `POST /api/users` |
+| `test/orders.test.js` | `GET /api/orders`, `GET /api/orders/:oid`, `POST /api/orders`, `PATCH /api/orders/:oid/status` |
+| `test/mocks.test.js` | `GET /api/mocks/users\|orders\|deliveries\|full`, `POST /api/mocks/generate` |
+| `test/logs.test.js` | `GET /api/logs/test` |
+| `test/docs.test.js` | `GET /api/docs` (Swagger UI) |
+| `test/notFound.test.js` | Rutas inexistentes y métodos no soportados (404 uniforme) |
+
+Cada archivo cubre casos exitosos **y** de error (datos incompletos,
+recurso inexistente, estado inválido, cantidades de mock inválidas, ruta
+inexistente), validando siempre el `status` HTTP **y** la forma del body
+según `src/errors/` (`{ success: false, error: { code, message, details? } }`),
+nunca solo "que responda" o "que falle". El caso de `GET /api/orders/:oid`
+con un pedido inexistente, por ejemplo, corrobora el mismo `404` y el mismo
+`ORDER_NOT_FOUND` que documenta `src/docs/orders.docs.js` en Swagger.
+
+***REMOVED******REMOVED******REMOVED*** Datos de prueba y limpieza
+
+- Los datos que cada test necesita (un usuario, un pedido) se crean **en
+  el propio test**, llamando a la API real a través de los helpers de
+  `test/helpers/fixtures.js` (`createUser`, `createCustomer`, `createDriver`,
+  `createOrder`) — nunca se depende de datos cargados manualmente de
+  antemano.
+- **Limpieza automática:** un root hook global en `test/setup.js` (root
+  hooks) vacía **todas** las colecciones de la base de testing después de
+  **cada test individual** (`afterEach`). Esto garantiza que ningún test
+  dependa de datos dejados por otro ni del orden en que Mocha decida
+  correrlos — cada test parte siempre de una base vacía.
+
+***REMOVED******REMOVED******REMOVED*** ¿Se necesita una base de datos de testing?
+
+Sí. A diferencia de un mock en memoria, estos tests validan el flujo real
+completo (`Router → Controller → Service → Repository → Mongoose`),
+incluyendo los errores que traduce Mongoose (`CastError` → `400
+INVALID_ID`, índice único de `email` → `409 DUPLICATE_EMAIL`, etc.), así
+que necesitan una instancia real de MongoDB — la misma que ya usás para
+desarrollo, apuntando a una base distinta.
+
+***REMOVED******REMOVED******REMOVED*** Variables de entorno necesarias para testing
+
+| Variable | Descripción |
+|---|---|
+| `PORT` | Exigida por `env.config.js` al arrancar, aunque los tests no levantan servidor |
+| `MONGODB_URI` | Cadena de conexión a la base de **testing** (distinta a la de desarrollo) |
+| `NODE_ENV` | Debe ser `test` — baja el nivel de logs a `warning` (ver [Sistema de logging](***REMOVED***sistema-de-logging)) |

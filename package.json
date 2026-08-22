@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "mocha",
+    "test:watch": "mocha --watch"
   },
   "keywords": [
     "backend",
@@ -28,7 +30,10 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "chai": "^6.2.2",
     "eslint": "^10.8.0",
-    "nodemon": "^3.1.9"
+    "mocha": "^11.8.0",
+    "nodemon": "^3.1.9",
+    "supertest": "^7.2.2"
   }
 }

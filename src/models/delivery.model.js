@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import fileMetadataSchema from './fileMetadata.schema.js';
 
 const deliverySchema = new mongoose.Schema({
   order: {
@@ -28,6 +29,10 @@ const deliverySchema = new mongoose.Schema({
   deliveredAt: {
     type: Date,
     default: null
+  },
+  documents: {
+    type: [fileMetadataSchema],
+    default: []
   }
 }, {
   timestamps: true

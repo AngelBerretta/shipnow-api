@@ -91,8 +91,33 @@ export const ERROR_DICTIONARY = Object.freeze({
     message: 'Ocurrio un error al cargar los datos de prueba en MongoDB',
   },
 
+  [ERROR_CODES.FILE_REQUIRED]: {
+    statusCode: 400,
+    message: 'El archivo es obligatorio',
+  },
+  [ERROR_CODES.INVALID_FILE_TYPE]: {
+    statusCode: 400,
+    message: 'El tipo de archivo no esta permitido',
+  },
+  [ERROR_CODES.FILE_TOO_LARGE]: {
+    statusCode: 400,
+    message: 'El archivo supera el tamaño maximo permitido',
+  },
+  [ERROR_CODES.INVALID_DOCUMENT_TYPE]: {
+    statusCode: 400,
+    message: 'El tipo de documento indicado no es valido',
+  },
+  [ERROR_CODES.UNEXPECTED_FILE_FIELD]: {
+    statusCode: 400,
+    message: 'El archivo se envio en un campo inesperado',
+  },
+
   [ERROR_CODES.INTERNAL_ERROR]: {
     statusCode: 500,
     message: 'Error interno del servidor',
+  },
+  [ERROR_CODES.FILE_UPLOAD_FAILED]: {
+    statusCode: 500,
+    message: 'Ocurrio un error al guardar el archivo en el servidor',
   },
 });

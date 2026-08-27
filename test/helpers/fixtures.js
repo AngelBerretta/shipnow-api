@@ -62,6 +62,23 @@ export async function createOrder(customerId, overrides = {}) {
   return response.body.order;
 }
 
+/**
+ * Crea una entrega real (con su cliente, pedido y repartidor de
+ * fixture) via POST /api/deliveries y devuelve la entrega creada.
+ */
+export async function createDelivery(overrides = {}) {
+  const customer = await createCustomer();
+  const driver = await createDriver();
+  const order = await createOrder(customer._id);
+  const payload = { order: order._id, driver: driver._id, ...overrides };
+
+  const response = await request(app).post('/api/deliveries').send(payload);
+  if (response.status !== 201) {
+    throw new Error(`No se pudo crear la entrega de prueba: ${JSON.stringify(response.body)}`);
+  }
+  return response.body;
+}
+
 /** Un ObjectId con formato valido pero que no existe en la base. */
 export const NON_EXISTENT_ID = '64a000000000000000000000';
 

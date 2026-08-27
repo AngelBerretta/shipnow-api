@@ -1,4 +1,7 @@
 import js from '@eslint/js';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
 
 export default [
   js.configs.recommended,
@@ -36,8 +39,10 @@ export default [
     },
   },
   {
-    // Globals propios de Mocha (describe/it/hooks), usados solo dentro de
-    // test/. El resto de las reglas de la config de arriba sigue aplicando.
+    // Globals propios de Mocha (describe/it/hooks) y de Node (Buffer, para
+    // armar archivos en memoria en los tests de carga de archivos), usados
+    // solo dentro de test/. El resto de las reglas de la config de arriba
+    // sigue aplicando.
     files: ['test/**/*.js'],
     languageOptions: {
       globals: {
@@ -47,6 +52,7 @@ export default [
         after: 'readonly',
         beforeEach: 'readonly',
         afterEach: 'readonly',
+        Buffer: 'readonly',
       },
     },
   },

@@ -12,9 +12,24 @@ logs/*
 !logs/.gitkeep
 *.log
 
+***REMOVED*** Archivos subidos por los usuarios (Multer). Solo se versiona la
+***REMOVED*** estructura de carpetas (.gitkeep); los archivos reales nunca van al
+***REMOVED*** repo. En la base solo se guardan los metadatos (ver fileMetadata.schema.js).
+uploads/*
+!uploads/.gitkeep
+!uploads/users/
+!uploads/deliveries/
+uploads/users/*
+!uploads/users/.gitkeep
+uploads/deliveries/*
+!uploads/deliveries/.gitkeep
+
 ***REMOVED*** Sistema
 .DS_Store
 
 ***REMOVED*** Editor
 .vscode/
 .idea/
+
+
+

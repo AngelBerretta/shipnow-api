@@ -267,7 +267,28 @@ de que la logica de negocio llegue a evaluarse, para que la respuesta sea igual 
 | Mongoose `ValidationError` de esquema | Falta un campo requerido que el Service no llego a chequear | `400 VALIDATION_ERROR` con el detalle de cada campo |
 | MongoDB `E11000` (clave duplicada) | Condicion de carrera con el mismo email | `409 DUPLICATE_EMAIL` / `409 DUPLICATE_KEY` |
 | `express.json()` | Body con JSON malformado | `400 MALFORMED_JSON` |
+| Multer `MulterError` (`LIMIT_FILE_SIZE`) | Archivo mas pesado que el limite configurado | `400 FILE_TOO_LARGE` |
+| Multer `MulterError` (`LIMIT_UNEXPECTED_FILE`) | El archivo llego en un campo distinto a `file` | `400 UNEXPECTED_FILE_FIELD` |
 | Cualquier otro error no reconocido | Bug o falla inesperada | `500 INTERNAL_ERROR` (se loguea completo en el servidor, nunca se expone el detalle interno al cliente) |
+
+***REMOVED******REMOVED******REMOVED*** Validaciones del módulo de carga de archivos
+
+`upload.service.js` combina dos fuentes de error distintas, ambas terminando en el mismo
+`ApiError`: las que detecta Multer mecanicamente (antes de que el archivo llegue al Service) y las
+que son reglas de negocio (despues):
+
+- **Archivo con tipo no permitido**: lo rechaza el `fileFilter` de `multer.config.js` lanzando
+  `400 INVALID_FILE_TYPE` directamente (nunca llega a guardarse en disco).
+- **Archivo faltante**: Multer no lo considera un error (un campo de archivo vacio simplemente no
+  llena `req.file`), asi que lo valida el Service: `400 FILE_REQUIRED`.
+- **Tipo de documento invalido o faltante**: `400 INVALID_DOCUMENT_TYPE` (no pertenece al enum
+  `DOCUMENT_TYPES`) o `400 VALIDATION_ERROR` (falta en el endpoint de documentos de usuario, donde
+  es obligatorio).
+- **Entidad destino inexistente**: `404 USER_NOT_FOUND` / `404 DELIVERY_NOT_FOUND`.
+- **Limpieza de archivos huerfanos**: como Multer ya escribio el archivo en disco antes de que el
+  Service pueda validar el tipo de documento o la existencia de la entidad, si cualquiera de esas
+  dos validaciones falla el Service borra el archivo recien guardado (`removeUploadedFile`) antes
+  de propagar el error. Un archivo nunca queda en `uploads/` sin su metadato asociado en Mongo.
 
 ***REMOVED******REMOVED******REMOVED*** Validaciones del módulo de mocks
 
@@ -450,6 +471,7 @@ cat logs/error-$(date +%Y-%m-%d).log
 | GET    | /api/users/:uid                | Obtener usuario por ID        |
 | POST   | /api/users                    | Crear usuario                |
 | DELETE | /api/users/:uid                | Eliminar usuario              |
+| POST   | /api/users/:uid/documents       | Cargar un documento de usuario (DNI, licencia, etc.) |
 | GET    | /api/products                  | Listar productos              |
 | GET    | /api/products/:pid              | Obtener producto por ID        |
 | POST   | /api/products                  | Crear producto                |
@@ -465,6 +487,7 @@ cat logs/error-$(date +%Y-%m-%d).log
 | POST   | /api/deliveries                | Crear entrega                  |
 | PATCH  | /api/deliveries/:did/status       | Actualizar estado entrega       |
 | DELETE | /api/deliveries/:did             | Eliminar entrega                |
+| POST   | /api/deliveries/:did/proof        | Cargar un comprobante de entrega |
 | GET    | /api/mocks/users                | Simular usuarios (no se guardan) |
 | GET    | /api/mocks/orders                | Simular pedidos (no se guardan) |
 | GET    | /api/mocks/deliveries            | Simular entregas (no se guardan)|
@@ -472,7 +495,9 @@ cat logs/error-$(date +%Y-%m-%d).log
 | POST   | /api/mocks/generate              | Insertar datos de prueba reales en MongoDB |
 | GET    | /api/logs/test                   | Endpoint interno de testing: dispara los 6 niveles del logger |
 
-Ver la sección [Mocking y carga de datos de prueba](***REMOVED***mocking-y-carga-de-datos-de-prueba) para el detalle de cada endpoint.
+Ver la sección [Mocking y carga de datos de prueba](***REMOVED***mocking-y-carga-de-datos-de-prueba) para el
+detalle de esos endpoints, y [Carga de archivos (Multer)](***REMOVED***carga-de-archivos-multer) para el
+detalle de `/documents` y `/proof`.
 
 ***REMOVED******REMOVED*** Constantes de dominio
 
@@ -486,6 +511,92 @@ código:
 - `ORDER_STATUS`: `CREATED`, `ASSIGNED`, `PICKED_UP`, `IN_TRANSIT`, `DELIVERED`, `CANCELLED`
 - `DELIVERY_STATUS`: `PENDING`, `ASSIGNED`, `IN_TRANSIT`, `DELIVERED`
 - `PRIORITY`: `LOW`, `NORMAL`, `HIGH`
+- `DOCUMENT_TYPES`: `DNI`, `LICENSE`, `PROOF_OF_ADDRESS`, `DELIVERY_PROOF`, `OTHER`
+
+***REMOVED******REMOVED*** Carga de archivos (Multer)
+
+ShipNow permite subir documentos y comprobantes vía `multipart/form-data`, guardarlos en el
+filesystem del servidor y asociarlos a una entidad existente (usuario o entrega). El archivo en sí
+**nunca** se guarda en MongoDB: solo se persisten sus metadatos.
+
+***REMOVED******REMOVED******REMOVED*** Configuración centralizada
+
+Toda la configuración de Multer vive en `src/config/multer.config.js`, separada de los routers
+(igual que Swagger vive separado en `swagger.config.js`). Define:
+
+- **Dónde se guardan los archivos**: destino fijo por recurso, no dinámico por `documentType`. El
+  `destination` de `multer.diskStorage` se evalúa mientras el form-data todavía se está
+  parseando, así que depender ahí de otro campo del body sería frágil (solo funcionaría si ese
+  campo llegó *antes* que el archivo). Para evitar ese acoplamiento al orden de los campos, cada
+  endpoint tiene una carpeta fija y el `documentType` viaja como metadato, validado en el Service.
+- **Cómo se nombran**: `timestamp-sufijo_aleatorio.extension`, nunca se reutiliza el nombre
+  original (evita colisiones y problemas de path traversal).
+- **Tipos aceptados**: `application/pdf`, `image/jpeg`, `image/png`, `image/webp`.
+- **Tamaño máximo**: 5MB por archivo.
+- **Manejo de errores de carga**: ver [Validaciones del módulo de carga de archivos](***REMOVED***validaciones-del-módulo-de-carga-de-archivos).
+
+***REMOVED******REMOVED******REMOVED*** Estructura de carpetas
+
+```
+uploads/
+├── .gitkeep
+├── users/            ***REMOVED*** Documentos de usuario (DNI, licencia, comprobante de domicilio, etc.)
+│   └── .gitkeep
+└── deliveries/        ***REMOVED*** Comprobantes de entrega (foto, firma del cliente, etc.)
+    └── .gitkeep
+```
+
+`uploads/` está en `.gitignore` (mismo patrón que `logs/`): los archivos subidos nunca se suben al
+repositorio, solo la estructura de carpetas vacía (`.gitkeep`).
+
+***REMOVED******REMOVED******REMOVED*** Endpoints
+
+**`POST /api/users/:uid/documents`** — campo de archivo `file` (obligatorio) + campo
+`documentType` (obligatorio, uno de `DOCUMENT_TYPES`). Verifica que el usuario exista, valida el
+archivo y el tipo de documento, y agrega el metadato a `user.documents`.
+
+```bash
+curl -X POST http://localhost:3000/api/users/<uid>/documents \
+  -F "file=@./dni-frente.pdf" \
+  -F "documentType=dni"
+```
+
+**`POST /api/deliveries/:did/proof`** — campo de archivo `file` (obligatorio) + campo
+`documentType` opcional (si no se envía, se guarda como `comprobante_entrega`). Verifica que la
+entrega exista, valida el archivo, y agrega el metadato a `delivery.documents`.
+
+```bash
+curl -X POST http://localhost:3000/api/deliveries/<did>/proof \
+  -F "file=@./firma-cliente.jpg"
+```
+
+Ambas respuestas exitosas devuelven `201` con la entidad actualizada:
+
+```json
+{
+  "message": "Documento cargado correctamente",
+  "user": {
+    "_id": "66f1a2b3c4d5e6f7a8b9c0d1",
+    "...": "...",
+    "documents": [
+      {
+        "_id": "66f1a2b3c4d5e6f7a8b9c0d5",
+        "originalName": "dni-frente.pdf",
+        "storedName": "1735000000000-482913746.pdf",
+        "path": "uploads/users/1735000000000-482913746.pdf",
+        "mimeType": "application/pdf",
+        "size": 204800,
+        "documentType": "dni",
+        "uploadedAt": "2026-08-26T12:00:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+Ambos endpoints están documentados como `multipart/form-data` en Swagger (`/api/docs`, tag
+`Uploads`), con el nombre del campo de archivo, los campos adicionales, los tipos de documento
+permitidos y todos los errores posibles con ejemplo.
 
 ***REMOVED******REMOVED*** Mocking y carga de datos de prueba
 
@@ -707,6 +818,7 @@ archivo de test).
 |---|---|
 | `test/users.test.js` | `GET /api/users`, `GET /api/users/:uid`, `POST /api/users` |
 | `test/orders.test.js` | `GET /api/orders`, `GET /api/orders/:oid`, `POST /api/orders`, `PATCH /api/orders/:oid/status` |
+| `test/uploads.test.js` | `POST /api/users/:uid/documents`, `POST /api/deliveries/:did/proof` |
 | `test/mocks.test.js` | `GET /api/mocks/users\|orders\|deliveries\|full`, `POST /api/mocks/generate` |
 | `test/logs.test.js` | `GET /api/logs/test` |
 | `test/docs.test.js` | `GET /api/docs` (Swagger UI) |

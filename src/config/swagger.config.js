@@ -76,6 +76,13 @@ const swaggerDefinition = {
         'Endpoint interno de validación del sistema de logging (Winston). ' +
         'Es una herramienta de testing/observabilidad, no una funcionalidad de negocio.',
     },
+    {
+      name: 'Uploads',
+      description:
+        'Carga de archivos (documentos de usuario y comprobantes de entrega) vía ' +
+        'multipart/form-data con Multer. Los archivos se guardan en el filesystem ' +
+        'del servidor; en MongoDB solo se persisten sus metadatos.',
+    },
   ],
 };
 

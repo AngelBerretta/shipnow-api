@@ -63,16 +63,11 @@
  *           $ref: '***REMOVED***/components/schemas/Role'
  *         documents:
  *           type: array
- *           description: Documentos asociados al usuario (opcional, vacío por defecto).
+ *           description: >
+ *             Documentos cargados para este usuario (vacío por defecto). Se
+ *             suman con `POST /api/users/{uid}/documents` — ver tag `Uploads`.
  *           items:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *                 example: DNI
- *               reference:
- *                 type: string
- *                 example: dni-12345678.pdf
+ *             $ref: '***REMOVED***/components/schemas/FileMetadata'
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -243,6 +238,13 @@
  *           type: string
  *           format: date-time
  *           nullable: true
+ *         documents:
+ *           type: array
+ *           description: >
+ *             Comprobantes asociados a esta entrega (vacío por defecto). Se
+ *             suman con `POST /api/deliveries/{did}/proof` — ver tag `Uploads`.
+ *           items:
+ *             $ref: '***REMOVED***/components/schemas/FileMetadata'
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -339,6 +341,68 @@
  *             Ignorado si `stock` queda en 0: el producto siempre pasa a
  *             `out_of_stock` sin importar el valor enviado acá.
  *
+ *     DocumentType:
+ *       type: string
+ *       description: >
+ *         Tipo de documento cargado. `comprobante_entrega` es el valor por
+ *         defecto de `POST /api/deliveries/{did}/proof` cuando no se envía
+ *         `documentType`; los demás se usan principalmente para
+ *         `POST /api/users/{uid}/documents`.
+ *       enum: [dni, licencia, comprobante_domicilio, comprobante_entrega, otro]
+ *       example: dni
+ *
+ *     FileMetadata:
+ *       type: object
+ *       description: >
+ *         Metadatos de un archivo cargado con Multer. El archivo en sí vive
+ *         en el filesystem del servidor (`uploads/`), nunca en MongoDB.
+ *       properties:
+ *         _id:
+ *           type: string
+ *           example: 66f1a2b3c4d5e6f7a8b9c0d5
+ *         originalName:
+ *           type: string
+ *           description: Nombre del archivo tal como lo envió el cliente.
+ *           example: dni-frente.pdf
+ *         storedName:
+ *           type: string
+ *           description: Nombre generado por el servidor al guardarlo (evita colisiones).
+ *           example: 1735000000000-482913746.pdf
+ *         path:
+ *           type: string
+ *           description: Ruta del archivo relativa a la raíz del proyecto.
+ *           example: uploads/users/1735000000000-482913746.pdf
+ *         mimeType:
+ *           type: string
+ *           example: application/pdf
+ *         size:
+ *           type: integer
+ *           description: Tamaño del archivo en bytes.
+ *           example: 204800
+ *         documentType:
+ *           $ref: '***REMOVED***/components/schemas/DocumentType'
+ *         uploadedAt:
+ *           type: string
+ *           format: date-time
+ *
+ *     UserDocumentUploadResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           example: Documento cargado correctamente
+ *         user:
+ *           $ref: '***REMOVED***/components/schemas/User'
+ *
+ *     DeliveryProofUploadResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           example: Comprobante asociado a la entrega correctamente
+ *         delivery:
+ *           $ref: '***REMOVED***/components/schemas/Delivery'
+ *
  *     ErrorResponse:
  *       type: object
  *       description: Forma uniforme de TODA respuesta de error de la API (400, 403, 404, 409, 500).
@@ -371,6 +435,12 @@
  *                 - DELIVERY_ALREADY_COMPLETED
  *                 - INVALID_MOCK_QUANTITY
  *                 - MOCK_GENERATION_FAILED
+ *                 - FILE_REQUIRED
+ *                 - INVALID_FILE_TYPE
+ *                 - FILE_TOO_LARGE
+ *                 - INVALID_DOCUMENT_TYPE
+ *                 - UNEXPECTED_FILE_FIELD
+ *                 - FILE_UPLOAD_FAILED
  *                 - INTERNAL_ERROR
  *               example: VALIDATION_ERROR
  *             message:

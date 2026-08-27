@@ -47,3 +47,18 @@ export const PRIORITY = Object.freeze({
   NORMAL: 'normal',
   HIGH: 'high',
 });
+
+/**
+ * Tipos de documento aceptados por el modulo de carga de archivos
+ * (Multer). Se usan tanto para los documentos de un usuario
+ * (DNI, licencia, comprobante de domicilio) como para los comprobantes
+ * asociados a una entrega (DELIVERY_PROOF, que ademas es el valor por
+ * defecto cuando no se especifica un tipo al subir un comprobante).
+ */
+export const DOCUMENT_TYPES = Object.freeze({
+  DNI: 'dni',
+  LICENSE: 'licencia',
+  PROOF_OF_ADDRESS: 'comprobante_domicilio',
+  DELIVERY_PROOF: 'comprobante_entrega',
+  OTHER: 'otro',
+});

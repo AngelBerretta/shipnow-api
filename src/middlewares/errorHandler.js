@@ -1,6 +1,8 @@
 import ApiError from '../errors/ApiError.js';
 import { ERROR_CODES } from '../errors/errorCodes.js';
 import { ERROR_DICTIONARY } from '../errors/errorDictionary.js';
+import { FileTooLargeError, UnexpectedFileFieldError, FileUploadError } from '../errors/file.errors.js';
+import { UPLOAD_LIMITS } from '../config/multer.config.js';
 import logger from '../config/logger.config.js';
 
 /**
@@ -43,6 +45,22 @@ function normalizeError(error) {
 
   if (error.type === 'entity.parse.failed') {
     return new ApiError(ERROR_CODES.MALFORMED_JSON);
+  }
+
+  // Errores crudos de Multer (src/config/multer.config.js): igual que el
+  // CastError de Mongoose de mas arriba, nunca llegan a evaluarse en un
+  // Service porque el middleware de Multer falla antes, en la propia
+  // ruta. `fileFilter` (tipo de archivo no permitido) ya lanza un
+  // ApiError propio y no pasa por aca; esto cubre los limites que
+  // Multer valida por su cuenta mientras parsea el form-data.
+  if (error.name === 'MulterError') {
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return new FileTooLargeError(UPLOAD_LIMITS.maxFileSizeBytes);
+    }
+    if (error.code === 'LIMIT_UNEXPECTED_FILE') {
+      return new UnexpectedFileFieldError(error.field);
+    }
+    return new FileUploadError(`Error al procesar el archivo subido: ${error.message}`, { multerCode: error.code });
   }
 
   return null;

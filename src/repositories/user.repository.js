@@ -29,6 +29,15 @@ class UserRepository {
   async deleteById(id) {
     return User.findByIdAndDelete(id).select('-password');
   }
+
+  /**
+   * Agrega un nuevo elemento a `documents` sin pisar los ya existentes
+   * (`$push`), y devuelve el usuario ya actualizado.
+   */
+  async addDocument(id, documentData) {
+    return User.findByIdAndUpdate(id, { $push: { documents: documentData } }, { new: true, runValidators: true })
+      .select('-password');
+  }
 }
 
 export default new UserRepository();

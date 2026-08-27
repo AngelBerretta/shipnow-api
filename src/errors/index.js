@@ -30,3 +30,12 @@ export {
 } from './conflict.errors.js';
 
 export { InvalidMockQuantityError, MockGenerationError } from './mock.errors.js';
+
+export {
+  FileRequiredError,
+  InvalidFileTypeError,
+  FileTooLargeError,
+  InvalidDocumentTypeError,
+  UnexpectedFileFieldError,
+  FileUploadError,
+} from './file.errors.js';

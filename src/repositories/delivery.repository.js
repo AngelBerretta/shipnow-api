@@ -32,6 +32,17 @@ class DeliveryRepository {
   async deleteById(id) {
     return Delivery.findByIdAndDelete(id);
   }
+
+  /**
+   * Agrega un nuevo elemento a `documents` (comprobantes) sin pisar los
+   * ya existentes (`$push`), y devuelve la entrega ya actualizada y
+   * populada (misma proyeccion que `findById`).
+   */
+  async addDocument(id, documentData) {
+    return Delivery.findByIdAndUpdate(id, { $push: { documents: documentData } }, { new: true, runValidators: true })
+      .populate('order')
+      .populate('driver', 'firstName lastName email role');
+  }
 }
 
 export default new DeliveryRepository();

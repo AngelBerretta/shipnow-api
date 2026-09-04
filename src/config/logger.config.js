@@ -102,7 +102,18 @@ const combinedRotateTransport = new DailyRotateFile({
   format: baseFormat,
 });
 
+/**
+ * Resuelve el nivel mínimo a registrar. Prioridad:
+ * 1) LOG_LEVEL explícito por variable de entorno (config.logLevel), si
+ *    es uno de los niveles válidos definidos arriba.
+ * 2) Default según NODE_ENV (comportamiento previo, sin cambios).
+ */
 function resolveLevel() {
+  const explicitLevel = (config.logLevel || '').toLowerCase();
+  if (explicitLevel && Object.prototype.hasOwnProperty.call(LOG_LEVELS, explicitLevel)) {
+    return explicitLevel;
+  }
+
   const env = config.nodeEnv || 'development';
   const levels = {
     development: 'debug',

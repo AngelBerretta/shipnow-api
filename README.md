@@ -454,6 +454,266 @@ curl http://localhost:3000/api/logs/test
 cat logs/error-$(date +%Y-%m-%d).log
 ```
 
+***REMOVED******REMOVED*** Performance
+
+- **Paginación en los listados grandes.** `GET /api/users`,
+  `GET /api/orders`, `GET /api/deliveries` y `GET /api/products` ya NO
+  devuelven la colección completa: aceptan `?page` y `?limit` (por
+  defecto `page=1`, `limit=20`, tope `limit=100`) y responden
+  `{ data: [...], pagination: { page, limit, total, totalPages } }`.
+  Sin parámetros, igual se aplica el límite por defecto — nunca se
+  devuelve todo sin control. Además admiten filtros: `role` en users,
+  `status`/`customer` en orders, `status`/`driver` en deliveries,
+  `category`/`status` en products (ya existía).
+
+  ```bash
+  curl "http://localhost:3000/api/orders?status=created&page=2&limit=10"
+  ```
+
+  > Nota de compatibilidad: esto cambia el shape de la respuesta de esos
+  > cuatro endpoints (antes era un arreglo plano). Cualquier frontend o
+  > script que consuma `/api/users`, `/api/orders`, `/api/deliveries` o
+  > `/api/products` debe leer `response.data` en vez del body completo.
+  > Las llamadas internas del proyecto (ej. `mock.service.js` buscando
+  > "todos los customers disponibles" para el seeding) siguen trayendo
+  > el set completo: la paginación se aplica en la capa de Service que
+  > atiende peticiones HTTP, no en el Repository.
+
+- **Carga de archivos con límites, ya presente y sin cambios de fondo**:
+  tamaño máximo 5MB, tipos MIME restringidos
+  (`application/pdf`, `image/jpeg`, `image/png`, `image/webp`), errores
+  controlados (`FILE_TOO_LARGE`, `INVALID_FILE_TYPE`, etc.), archivos
+  guardados fuera del repo (`uploads/`, en `.gitignore`) y limpieza de
+  archivos huérfanos si la validación de negocio falla después de que
+  Multer ya escribió en disco (ver `src/services/upload.service.js`).
+  Sigue siendo almacenamiento en disco local: para un ambiente
+  productivo con múltiples réplicas conviene migrar a un storage externo
+  (S3 o similar) — queda fuera del alcance de esta entrega, documentado
+  como limitación conocida.
+
+- **Compresión de respuestas.** Se agregó el middleware `compression`
+  (gzip) en `src/app.js`: los listados con `populate` (pedidos con
+  cliente y entrega, entregas con pedido y repartidor) pueden pesar
+  varios KB por respuesta: comprimirlos reduce el tráfico real sin tocar
+  el body que recibe el cliente.
+
+- **Límite de tamaño de body JSON.** `express.json()` y
+  `express.urlencoded()` ahora tienen `limit: '1mb'` explícito, para que
+  un body inusualmente grande no llegue a consumir memoria antes de
+  cualquier validación de negocio. Los uploads de archivos van por
+  `multipart/form-data` (Multer), que tiene su propio límite de 5MB.
+
+- **Sin queries sin filtro ni operaciones sincrónicas por request.** Los
+  repositorios nunca hacen `Model.find({})` sin acotar en los endpoints
+  HTTP de listado (ver paginación arriba). Las únicas operaciones
+  síncronas del proyecto (`fs.existsSync`/`fs.mkdirSync` en
+  `logger.config.js` y `multer.config.js`) corren una sola vez al
+  arrancar el proceso, antes de levantar el servidor — no ocurren en el
+  Event Loop de ningún request, así que no lo bloquean.
+
+***REMOVED******REMOVED*** Preparación para producción
+
+***REMOVED******REMOVED******REMOVED*** Variables de entorno
+
+Hay tres plantillas, una por entorno, todas fuera del repo real (el
+`.gitignore` ya ignora `.env`, `.env.local` y `.env.test`; el `.env`
+real de producción tampoco debe subirse nunca):
+
+| Archivo                    | Uso                                                |
+|-----------------------------|-----------------------------------------------------|
+| `.env.example`               | Desarrollo local (`npm run dev`)                     |
+| `.env.test.example`           | Suite de tests (Mocha/Chai/Supertest, ver `test/setup.js`) |
+| `.env.production.example`     | Plantilla para un despliegue real                    |
+
+Variables cubiertas (mínimo pedido: puerto, URI de base de datos,
+entorno, secreto JWT, nivel de logs, URL de servicios externos):
+
+| Variable                  | Obligatoria | Descripción |
+|-----------------------------|:-----------:|--------------|
+| `PORT`                       | Sí          | Puerto HTTP del servidor |
+| `MONGODB_URI`                 | Sí          | Cadena de conexión a MongoDB |
+| `NODE_ENV`                    | Sí          | `development` \| `production` \| `test` |
+| `LOG_LEVEL`                   | No          | Nivel mínimo de log; si se omite, se infiere de `NODE_ENV` |
+| `JWT_SECRET`                  | No*         | Reservado para cuando se agregue autenticación (esta versión de la API no implementa auth) |
+| `CORS_ORIGIN`                 | No          | Origen(es) permitido(s) por CORS (`*` en dev, dominio real en producción) |
+| `EMAIL_SERVICE_URL`           | No          | URL de un proveedor real de email (hoy el envío está simulado con logs) |
+| `ENABLE_INTERNAL_ROUTES`      | No          | Fuerza Swagger/`/api/mocks`/`/api/logs` en producción (ver más abajo) |
+
+\* `JWT_SECRET` no es obligatoria hoy porque no hay autenticación
+implementada. El día que se agregue login/JWT, debe sumarse a la lista
+de variables críticas en `src/config/env.config.js`.
+
+Ningún valor sensible está escrito en el código: todo se lee desde
+`process.env` a través de `src/config/env.config.js`, el único archivo
+del proyecto que debe tocar `process.env` directamente.
+
+***REMOVED******REMOVED******REMOVED*** Validación al arrancar
+
+`src/config/env.config.js` valida, antes de conectar a Mongo o levantar
+el servidor:
+
+- Que `PORT`, `MONGODB_URI` y `NODE_ENV` estén definidas.
+- Que `NODE_ENV` sea uno de `development`/`production`/`test`.
+- Que `PORT` sea un número de puerto válido.
+
+Si algo falla, lanza un error descriptivo y el proceso no arranca (no
+hay ningún camino en el que la app quede "a medias" sirviendo tráfico
+sin su configuración completa).
+
+```bash
+$ PORT= npm start
+***REMOVED*** [config] Faltan variables de entorno obligatorias: PORT. Revisa tu
+***REMOVED*** archivo .env (podes tomar como referencia .env.example).
+```
+
+***REMOVED******REMOVED******REMOVED*** Health check
+
+```
+GET /api/health
+```
+
+Disponible en cualquier entorno (incluida producción), no depende de que
+Mongo esté conectado y no expone nada sensible (ni la URI de Mongo, ni
+secretos, ni stack traces):
+
+```json
+{
+  "status": "ok",
+  "environment": "production",
+  "uptime": 128.4,
+  "timestamp": "2026-09-02T15:30:00.000Z"
+}
+```
+
+***REMOVED******REMOVED******REMOVED*** Endpoints internos en producción (criterio aplicado)
+
+Swagger (`/api/docs`), `/api/mocks` y `/api/logs/test` **se deshabilitan
+por defecto cuando `NODE_ENV=production`**. Razón: no son funcionalidad
+de negocio real de ShipNow (son herramientas de desarrollo/QA), y en
+particular `/api/mocks` puede escribir datos falsos directamente en la
+base si alguien lo llama por error en producción.
+
+En `development` y `test` quedan siempre disponibles.
+
+Si un ambiente productivo real igual los necesita (por ejemplo, un
+staging donde el equipo todavía usa Swagger para probar), se pueden
+reactivar explícitamente con `ENABLE_INTERNAL_ROUTES=true`. La lógica
+completa vive en `src/app.js`.
+
+***REMOVED******REMOVED******REMOVED*** Apagado ordenado (graceful shutdown)
+
+`src/server.js` escucha `SIGTERM`/`SIGINT` (las señales que Docker envía
+al hacer `docker stop`): deja de aceptar conexiones nuevas, espera a que
+terminen las peticiones en curso, cierra la conexión a MongoDB y recién
+ahí termina el proceso — en vez de cortar conexiones HTTP de golpe.
+
+***REMOVED******REMOVED*** Docker
+
+***REMOVED******REMOVED******REMOVED*** Construir la imagen
+
+```bash
+docker build -t shipnow-api .
+```
+
+***REMOVED******REMOVED******REMOVED*** Ejecutar el contenedor
+
+Con variables sueltas:
+
+```bash
+docker run -d \
+  --name shipnow-api \
+  -p 3000:3000 \
+  -e PORT=3000 \
+  -e MONGODB_URI="mongodb://host.docker.internal:27017/shipnow" \
+  -e NODE_ENV=production \
+  -e LOG_LEVEL=info \
+  -e CORS_ORIGIN="https://tu-frontend-real.com" \
+  shipnow-api
+```
+
+O pasando un archivo `.env` externo (copiar `.env.production.example`
+como `.env.production`, completarlo, y NO commitearlo):
+
+```bash
+docker run -d \
+  --name shipnow-api \
+  -p 3000:3000 \
+  --env-file .env.production \
+  shipnow-api
+```
+
+Con `docker-compose` (levanta también una instancia de MongoDB para
+probar todo junto):
+
+```bash
+docker compose up --build
+```
+
+***REMOVED******REMOVED******REMOVED*** Probar que quedó levantada
+
+```bash
+curl http://localhost:3000/api/health
+curl http://localhost:3000/api/docs         ***REMOVED*** solo si ENABLE_INTERNAL_ROUTES=true en producción, o NODE_ENV != production
+curl http://localhost:3000/api/products
+```
+
+***REMOVED******REMOVED******REMOVED*** Detalles de la imagen
+
+- Base: `node:20-alpine`.
+- Solo dependencias de producción (`npm ci --omit=dev`): eslint, mocha,
+  chai, supertest y nodemon no viajan dentro de la imagen final.
+- Corre como usuario no-root (`USER node`), no como root.
+- Puerto expuesto: `3000` (mismo que `PORT` por defecto). Si se cambia
+  `PORT` en runtime, hay que publicar ese otro puerto con `-p`.
+- `logs/` y `uploads/` se pre-crean dentro de la imagen con el dueño
+  correcto para que el usuario `node` pueda escribir ahí. Como el
+  filesystem del contenedor es efímero, si se necesita conservar esos
+  datos entre recreaciones del contenedor hay que montarlos como volumen
+  (ver ejemplo en `docker-compose.yml`):
+
+  ```bash
+  docker run -d -p 3000:3000 --env-file .env.production \
+    -v $(pwd)/logs:/app/logs \
+    -v $(pwd)/uploads:/app/uploads \
+    shipnow-api
+  ```
+
+***REMOVED******REMOVED******REMOVED*** Qué NO debe subirse al repo ni entrar a la imagen
+
+- `.env`, `.env.local`, `.env.test`, `.env.production` (cualquier `.env`
+  real, con valores verdaderos).
+- `node_modules/` (se reinstala dentro de la imagen).
+- `logs/` y `uploads/` (contenido generado en runtime; solo se versionan
+  los `.gitkeep`).
+- `.git/`, `coverage/`, archivos temporales (`*.log`, `.DS_Store`, etc.).
+- `eslint.config.js` — excluido de la imagen mientras se limpia el
+  código malicioso encontrado en ese archivo (ver aviso de seguridad más
+  arriba).
+
+Todo esto está reflejado en `.gitignore` (repo) y `.dockerignore`
+(imagen).
+
+***REMOVED******REMOVED*** Resumen rápido de comandos
+
+```bash
+***REMOVED*** Desarrollo local
+cp .env.example .env            ***REMOVED*** completar valores
+npm install
+npm run dev
+
+***REMOVED*** Tests
+cp .env.test.example .env.test  ***REMOVED*** completar valores (Mongo de testing)
+npm test
+
+***REMOVED*** Swagger (con el server corriendo)
+open http://localhost:3000/api/docs
+
+***REMOVED*** Docker
+docker build -t shipnow-api .
+docker run -d -p 3000:3000 --env-file .env.production shipnow-api
+curl http://localhost:3000/api/health
+```
+
 ***REMOVED******REMOVED*** Variables de entorno
 
 | Variable      | Descripción                                   | Ejemplo                              |
@@ -462,27 +722,39 @@ cat logs/error-$(date +%Y-%m-%d).log
 | `MONGODB_URI` | Cadena de conexión a MongoDB                    | `mongodb://localhost:27017/shipnow`   |
 | `NODE_ENV`    | Entorno de ejecución                            | `development`                         |
 
+> Ver también [Preparación para producción → Variables de entorno](***REMOVED***variables-de-entorno-1)
+> para el detalle completo de variables opcionales (`LOG_LEVEL`, `JWT_SECRET`,
+> `CORS_ORIGIN`, `EMAIL_SERVICE_URL`, `ENABLE_INTERNAL_ROUTES`) y las plantillas
+> por entorno (`.env.example`, `.env.test.example`, `.env.production.example`).
+
 ***REMOVED******REMOVED*** Endpoints
+
+> ⚠️ **Nota de compatibilidad:** `GET /api/users`, `GET /api/orders`,
+> `GET /api/deliveries` y `GET /api/products` ya no devuelven un arreglo
+> plano: ahora devuelven `{ data: [...], pagination: { page, limit, total,
+> totalPages } }`, y aceptan `?page`/`?limit` además de sus filtros
+> habituales. Ver detalle en [Performance](***REMOVED***performance).
 
 | Método | Ruta                          | Descripción                |
 |--------|-------------------------------|-----------------------------|
 | GET    | /api/docs                     | Documentación interactiva (Swagger UI) — ver [Documentación de la API (Swagger)](***REMOVED***documentación-de-la-api-swagger) |
-| GET    | /api/users                    | Listar usuarios              |
+| GET    | /api/health                    | Health check — ver [Preparación para producción](***REMOVED***preparación-para-producción) |
+| GET    | /api/users                    | Listar usuarios (paginado, ver [Performance](***REMOVED***performance)) |
 | GET    | /api/users/:uid                | Obtener usuario por ID        |
 | POST   | /api/users                    | Crear usuario                |
 | DELETE | /api/users/:uid                | Eliminar usuario              |
 | POST   | /api/users/:uid/documents       | Cargar un documento de usuario (DNI, licencia, etc.) |
-| GET    | /api/products                  | Listar productos              |
+| GET    | /api/products                  | Listar productos (paginado, ver [Performance](***REMOVED***performance)) |
 | GET    | /api/products/:pid              | Obtener producto por ID        |
 | POST   | /api/products                  | Crear producto                |
 | PUT    | /api/products/:pid              | Actualizar producto            |
 | DELETE | /api/products/:pid              | Eliminar producto              |
-| GET    | /api/orders                    | Listar pedidos                |
+| GET    | /api/orders                    | Listar pedidos (paginado, ver [Performance](***REMOVED***performance)) |
 | GET    | /api/orders/:oid                | Obtener pedido por ID          |
 | POST   | /api/orders                    | Crear pedido                  |
 | PATCH  | /api/orders/:oid/status          | Actualizar estado pedido       |
 | DELETE | /api/orders/:oid                | Eliminar pedido                |
-| GET    | /api/deliveries                | Listar entregas                |
+| GET    | /api/deliveries                | Listar entregas (paginado, ver [Performance](***REMOVED***performance)) |
 | GET    | /api/deliveries/:did             | Obtener entrega por ID          |
 | POST   | /api/deliveries                | Crear entrega                  |
 | PATCH  | /api/deliveries/:did/status       | Actualizar estado entrega       |
@@ -715,6 +987,13 @@ Qué hace, en orden:
    y se informa por `warning` (no corta la carga de usuarios/pedidos que sí
    se pudo hacer).
 
+> **Nota:** el seeding sigue usando `UserRepository`/`OrderRepository`
+> directamente (no `/api/users` ni `/api/orders` vía HTTP) para leer "todos
+> los customers disponibles" y elegir con qué relacionar los datos nuevos:
+> esa lectura interna **no está paginada** (ver [Performance](***REMOVED***performance)),
+> a diferencia de lo que devuelve `GET /api/users` o `GET /api/orders` cuando
+> se los llama directamente por HTTP.
+
 La respuesta (`201`) incluye un resumen y los documentos creados:
 
 ```json
@@ -742,9 +1021,9 @@ curl -X POST http://localhost:3000/api/mocks/generate \
   -H "Content-Type: application/json" -d '{"users": 8, "orders": 6, "deliveries": 4}'
 
 ***REMOVED*** 2. Verificar en los endpoints normales de la API
-curl http://localhost:3000/api/users
-curl http://localhost:3000/api/orders      ***REMOVED*** cada pedido trae el customer populado
-curl http://localhost:3000/api/deliveries  ***REMOVED*** cada entrega trae order y driver populados
+curl http://localhost:3000/api/users        ***REMOVED*** respuesta paginada: leer .data
+curl http://localhost:3000/api/orders       ***REMOVED*** cada pedido trae el customer populado
+curl http://localhost:3000/api/deliveries   ***REMOVED*** cada entrega trae order y driver populados
 ```
 
 Este endpoint es **aditivo**: no borra datos existentes, solo agrega. Para

@@ -1,0 +1,42 @@
+***REMOVED*** docker-compose.yml (opcional)
+***REMOVED***
+***REMOVED*** Levanta la API + una instancia de MongoDB para probar todo junto
+***REMOVED*** localmente, sin depender de una base externa. No reemplaza al
+***REMOVED*** Dockerfile: docker-compose lo usa (build: .) para construir la imagen
+***REMOVED*** de la API.
+***REMOVED***
+***REMOVED*** Uso:
+***REMOVED***   docker compose up --build
+***REMOVED***   docker compose down            ***REMOVED*** detiene y borra los contenedores
+***REMOVED***   docker compose down -v         ***REMOVED*** además borra el volumen de Mongo
+
+services:
+  api:
+    build: .
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    environment:
+      PORT: ${PORT:-3000}
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/shipnow}
+      NODE_ENV: ${NODE_ENV:-production}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      JWT_SECRET: ${JWT_SECRET:-changeme}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      ENABLE_INTERNAL_ROUTES: ${ENABLE_INTERNAL_ROUTES:-false}
+    depends_on:
+      - mongo
+    volumes:
+      ***REMOVED*** Persisten fuera del contenedor: el filesystem del contenedor es
+      ***REMOVED*** efímero (se pierde al recrearlo). Ver README, sección Docker.
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:

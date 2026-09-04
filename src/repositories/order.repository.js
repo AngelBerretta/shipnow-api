@@ -7,11 +7,24 @@ import Order from '../models/order.model.js';
  * otro archivo necesite conocer el esquema de Mongoose.
  */
 class OrderRepository {
-  async findAll(filter = {}) {
-    return Order.find(filter)
+  /**
+   * `options.limit` opcional: el seeding de mocks (mock.service.js) sigue
+   * pudiendo traer "todos los pedidos created disponibles" sin recorte.
+   * El límite por default para el listado HTTP vive en order.service.js.
+   */
+  async findAll(filter = {}, { skip = 0, limit = 0 } = {}) {
+    let query = Order.find(filter)
       .populate('customer', 'firstName lastName email role')
       .populate('delivery')
       .sort({ createdAt: -1 });
+    if (limit > 0) {
+      query = query.skip(skip).limit(limit);
+    }
+    return query;
+  }
+
+  async countAll(filter = {}) {
+    return Order.countDocuments(filter);
   }
 
   async findById(id) {

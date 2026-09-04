@@ -2,8 +2,8 @@ import orderService from '../services/order.service.js';
 
 export async function getAll(req, res, next) {
   try {
-    const orders = await orderService.getAllOrders();
-    res.json(orders);
+    const result = await orderService.getAllOrders(req.query);
+    res.json(result);
   } catch (error) {
     next(error);
   }

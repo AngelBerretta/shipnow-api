@@ -97,9 +97,12 @@ describe('Mocks (/api/mocks)', () => {
       expect(response.body.data.users).to.have.lengthOf(4);
       expect(response.body.data.orders).to.have.lengthOf(2);
 
-      // Los datos quedaron realmente en la base: se pueden leer por la API normal.
+      // Los datos quedaron realmente en la base: se pueden leer por la API
+      // normal. GET /api/users ahora devuelve un listado paginado
+      // ({ data, pagination }), no un arreglo plano.
       const usersResponse = await request(app).get('/api/users');
-      expect(usersResponse.body.length).to.be.at.least(4);
+      expect(usersResponse.body.data.length).to.be.at.least(4);
+      expect(usersResponse.body.pagination.total).to.be.at.least(4);
     });
 
     it('devuelve 400 INVALID_MOCK_QUANTITY si alguna cantidad es invalida', async () => {

@@ -2,8 +2,8 @@ import deliveryService from '../services/delivery.service.js';
 
 export async function getAll(req, res, next) {
   try {
-    const deliveries = await deliveryService.getAllDeliveries();
-    res.json(deliveries);
+    const result = await deliveryService.getAllDeliveries(req.query);
+    res.json(result);
   } catch (error) {
     next(error);
   }

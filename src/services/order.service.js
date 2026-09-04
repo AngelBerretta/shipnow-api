@@ -1,6 +1,7 @@
 import orderRepository from '../repositories/order.repository.js';
 import userRepository from '../repositories/user.repository.js';
 import { ROLES, ORDER_STATUS, PRIORITY } from '../constants/index.js';
+import { parsePagination, buildPaginationMeta } from '../utils/pagination.js';
 import logger from '../config/logger.config.js';
 import {
   OrderNotFoundError,
@@ -14,8 +15,31 @@ import {
 const SHIPPING_COST_PER_UNIT = 10;
 
 class OrderService {
-  async getAllOrders() {
-    return orderRepository.findAll();
+  /**
+   * Listado paginado de pedidos. Nunca devuelve la colección completa
+   * sin control (ver utils/pagination.js). Admite filtrar por `status`
+   * y por `customer` (?status=created&customer=<id>).
+   */
+  async getAllOrders(query = {}) {
+    const pagination = parsePagination(query);
+    const filter = {};
+
+    if (query.status) {
+      if (!Object.values(ORDER_STATUS).includes(query.status)) {
+        throw new InvalidStatusError(query.status, Object.values(ORDER_STATUS));
+      }
+      filter.status = query.status;
+    }
+    if (query.customer) {
+      filter.customer = query.customer;
+    }
+
+    const [orders, total] = await Promise.all([
+      orderRepository.findAll(filter, { skip: pagination.skip, limit: pagination.limit }),
+      orderRepository.countAll(filter),
+    ]);
+
+    return { data: orders, pagination: buildPaginationMeta(pagination, total) };
   }
 
   async getOrderById(id) {
@@ -103,9 +127,8 @@ class OrderService {
   }
 
   ***REMOVED***sendOrderConfirmationEmail(customerId, orderId, total) {
-    // Simulacion de envio de email (se reemplazaria por un EmailService real).
-    // Nivel "debug": es un detalle de implementacion (aun simulado, no
-    // pega a un proveedor real), solo relevante durante el desarrollo.
+    // Simulacion de envio de email (se reemplazaria por un EmailService real
+    // apuntando a config.emailServiceUrl, ver src/config/env.config.js).
     logger.debug(`[EMAIL SIMULADO] Enviando confirmacion al usuario ${customerId}...`);
     logger.debug(`[EMAIL SIMULADO] Tu pedido ${orderId} fue creado. Total: $${total}`);
   }

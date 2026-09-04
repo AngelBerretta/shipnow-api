@@ -7,8 +7,16 @@ import Product from '../models/product.model.js';
  * eso vive en ProductService.
  */
 class ProductRepository {
-  async findAll(filter = {}) {
-    return Product.find(filter).sort({ createdAt: -1 });
+  async findAll(filter = {}, { skip = 0, limit = 0 } = {}) {
+    let query = Product.find(filter).sort({ createdAt: -1 });
+    if (limit > 0) {
+      query = query.skip(skip).limit(limit);
+    }
+    return query;
+  }
+
+  async countAll(filter = {}) {
+    return Product.countDocuments(filter);
   }
 
   async findById(id) {

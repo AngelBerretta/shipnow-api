@@ -1,13 +1,26 @@
 import productRepository from '../repositories/product.repository.js';
 import { PRODUCT_STATUS } from '../constants/index.js';
+import { parsePagination, buildPaginationMeta } from '../utils/pagination.js';
 import { ProductNotFoundError, ValidationError } from '../errors/index.js';
 
 class ProductService {
+  /**
+   * Listado paginado de productos. Nunca devuelve la colección completa
+   * sin control (ver utils/pagination.js). Sigue admitiendo filtrar por
+   * `category` y/o `status`, igual que antes.
+   */
   async getAllProducts(query = {}) {
+    const pagination = parsePagination(query);
     const filter = {};
     if (query.category) filter.category = query.category;
     if (query.status) filter.status = query.status;
-    return productRepository.findAll(filter);
+
+    const [products, total] = await Promise.all([
+      productRepository.findAll(filter, { skip: pagination.skip, limit: pagination.limit }),
+      productRepository.countAll(filter),
+    ]);
+
+    return { data: products, pagination: buildPaginationMeta(pagination, total) };
   }
 
   async getProductById(id) {

@@ -8,8 +8,23 @@ import User from '../models/user.model.js';
  * en ninguna respuesta de la API.
  */
 class UserRepository {
-  async findAll(filter = {}) {
-    return User.find(filter).select('-password');
+  /**
+   * `options.limit` es opcional a propósito: llamadas internas (ej.
+   * mock.service.js buscando "todos los customers disponibles" para
+   * asociarles pedidos) siguen trayendo el set completo que matchea el
+   * filtro. El límite por default para pedidos HTTP de listado vive en
+   * la capa de Service (ver user.service.js / utils/pagination.js).
+   */
+  async findAll(filter = {}, { skip = 0, limit = 0 } = {}) {
+    let query = User.find(filter).select('-password').sort({ createdAt: -1 });
+    if (limit > 0) {
+      query = query.skip(skip).limit(limit);
+    }
+    return query;
+  }
+
+  async countAll(filter = {}) {
+    return User.countDocuments(filter);
   }
 
   async findById(id) {

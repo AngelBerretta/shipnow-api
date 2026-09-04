@@ -2,6 +2,7 @@ import deliveryRepository from '../repositories/delivery.repository.js';
 import orderRepository from '../repositories/order.repository.js';
 import userRepository from '../repositories/user.repository.js';
 import { ROLES, ORDER_STATUS, DELIVERY_STATUS, PRIORITY } from '../constants/index.js';
+import { parsePagination, buildPaginationMeta } from '../utils/pagination.js';
 import logger from '../config/logger.config.js';
 import {
   DeliveryNotFoundError,
@@ -14,8 +15,31 @@ import {
 } from '../errors/index.js';
 
 class DeliveryService {
-  async getAllDeliveries() {
-    return deliveryRepository.findAll();
+  /**
+   * Listado paginado de entregas. Nunca devuelve la colección completa
+   * sin control (ver utils/pagination.js). Admite filtrar por `status`
+   * y por `driver` (?status=in_transit&driver=<id>).
+   */
+  async getAllDeliveries(query = {}) {
+    const pagination = parsePagination(query);
+    const filter = {};
+
+    if (query.status) {
+      if (!Object.values(DELIVERY_STATUS).includes(query.status)) {
+        throw new InvalidStatusError(query.status, Object.values(DELIVERY_STATUS));
+      }
+      filter.status = query.status;
+    }
+    if (query.driver) {
+      filter.driver = query.driver;
+    }
+
+    const [deliveries, total] = await Promise.all([
+      deliveryRepository.findAll(filter, { skip: pagination.skip, limit: pagination.limit }),
+      deliveryRepository.countAll(filter),
+    ]);
+
+    return { data: deliveries, pagination: buildPaginationMeta(pagination, total) };
   }
 
   async getDeliveryById(id) {

@@ -6,14 +6,16 @@ import { createUser, createCustomer, buildUserPayload, NON_EXISTENT_ID, MALFORME
 
 describe('Usuarios (/api/users)', () => {
   describe('GET /api/users', () => {
-    it('devuelve 200 y un arreglo con los usuarios creados', async () => {
+    it('devuelve 200 y un listado paginado con los usuarios creados', async () => {
       const created = await createCustomer();
 
       const response = await request(app).get('/api/users');
 
       expect(response.status).to.equal(200);
-      expect(response.body).to.be.an('array');
-      const found = response.body.find((user) => user._id === created._id);
+      expect(response.body).to.have.property('data').that.is.an('array');
+      expect(response.body).to.have.property('pagination');
+      expect(response.body.pagination).to.include({ page: 1, limit: 20 });
+      const found = response.body.data.find((user) => user._id === created._id);
       expect(found).to.exist;
       expect(found).to.include({ firstName: created.firstName, email: created.email, role: ROLES.CUSTOMER });
     });
@@ -23,9 +25,32 @@ describe('Usuarios (/api/users)', () => {
 
       const response = await request(app).get('/api/users');
 
-      response.body.forEach((user) => {
+      response.body.data.forEach((user) => {
         expect(user).to.not.have.property('password');
       });
+    });
+
+    it('respeta page y limit por query param', async () => {
+      await createCustomer();
+      await createCustomer();
+      await createCustomer();
+
+      const response = await request(app).get('/api/users?page=1&limit=2');
+
+      expect(response.status).to.equal(200);
+      expect(response.body.data).to.have.lengthOf(2);
+      expect(response.body.pagination).to.include({ page: 1, limit: 2, total: 3, totalPages: 2 });
+    });
+
+    it('filtra por role cuando se envia por query param', async () => {
+      await createCustomer();
+      const driverPayload = buildUserPayload({ role: ROLES.DRIVER });
+      await request(app).post('/api/users').send(driverPayload);
+
+      const response = await request(app).get(`/api/users?role=${ROLES.DRIVER}`);
+
+      expect(response.status).to.equal(200);
+      response.body.data.forEach((user) => expect(user.role).to.equal(ROLES.DRIVER));
     });
   });
 

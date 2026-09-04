@@ -5,11 +5,24 @@ import Delivery from '../models/delivery.model.js';
  * Unico lugar de la aplicacion que conoce Mongoose/MongoDB para la entidad Delivery.
  */
 class DeliveryRepository {
-  async findAll(filter = {}) {
-    return Delivery.find(filter)
+  /**
+   * `options.limit` opcional: uso interno (ej. futuras integraciones) puede
+   * seguir pidiendo el set completo. El límite por default del listado
+   * HTTP vive en delivery.service.js.
+   */
+  async findAll(filter = {}, { skip = 0, limit = 0 } = {}) {
+    let query = Delivery.find(filter)
       .populate('order')
       .populate('driver', 'firstName lastName email role')
       .sort({ createdAt: -1 });
+    if (limit > 0) {
+      query = query.skip(skip).limit(limit);
+    }
+    return query;
+  }
+
+  async countAll(filter = {}) {
+    return Delivery.countDocuments(filter);
   }
 
   async findById(id) {

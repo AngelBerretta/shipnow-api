@@ -13,18 +13,36 @@ import {
 
 describe('Pedidos (/api/orders)', () => {
   describe('GET /api/orders', () => {
-    it('devuelve 200 y un arreglo con los pedidos creados, con el cliente populado', async () => {
+    it('devuelve 200 y un listado paginado con los pedidos creados, con el cliente populado', async () => {
       const customer = await createCustomer();
       const order = await createOrder(customer._id);
 
       const response = await request(app).get('/api/orders');
 
       expect(response.status).to.equal(200);
-      expect(response.body).to.be.an('array');
-      const found = response.body.find((o) => o._id === order._id);
+      expect(response.body).to.have.property('data').that.is.an('array');
+      expect(response.body).to.have.property('pagination');
+      const found = response.body.data.find((o) => o._id === order._id);
       expect(found).to.exist;
       expect(found.customer._id).to.equal(customer._id);
       expect(found.customer.email).to.equal(customer.email);
+    });
+
+    it('filtra por status cuando se envia por query param', async () => {
+      const customer = await createCustomer();
+      await createOrder(customer._id);
+
+      const response = await request(app).get(`/api/orders?status=${ORDER_STATUS.CREATED}`);
+
+      expect(response.status).to.equal(200);
+      response.body.data.forEach((order) => expect(order.status).to.equal(ORDER_STATUS.CREATED));
+    });
+
+    it('devuelve 400 INVALID_STATUS si el status de filtro no pertenece al enum', async () => {
+      const response = await request(app).get('/api/orders?status=inexistente');
+
+      expect(response.status).to.equal(400);
+      expect(response.body.error.code).to.equal('INVALID_STATUS');
     });
   });
 

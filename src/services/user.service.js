@@ -1,5 +1,6 @@
 import userRepository from '../repositories/user.repository.js';
 import { ROLES } from '../constants/index.js';
+import { parsePagination, buildPaginationMeta } from '../utils/pagination.js';
 import {
   UserNotFoundError,
   ValidationError,
@@ -9,8 +10,28 @@ import {
 } from '../errors/index.js';
 
 class UserService {
-  async getAllUsers() {
-    return userRepository.findAll();
+  /**
+   * Listado paginado de usuarios. Nunca devuelve la colección completa
+   * sin control: si no se especifica `page`/`limit` por query string, se
+   * aplican los defaults de utils/pagination.js (page=1, limit=20, tope
+   * 100). Admite filtrar por `role` (?role=driver).
+   */
+  async getAllUsers(query = {}) {
+    const pagination = parsePagination(query);
+    const filter = {};
+    if (query.role) {
+      if (!Object.values(ROLES).includes(query.role)) {
+        throw new InvalidRoleError(query.role, Object.values(ROLES));
+      }
+      filter.role = query.role;
+    }
+
+    const [users, total] = await Promise.all([
+      userRepository.findAll(filter, { skip: pagination.skip, limit: pagination.limit }),
+      userRepository.countAll(filter),
+    ]);
+
+    return { data: users, pagination: buildPaginationMeta(pagination, total) };
   }
 
   async getUserById(id) {

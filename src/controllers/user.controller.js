@@ -2,8 +2,8 @@ import userService from '../services/user.service.js';
 
 export async function getAll(req, res, next) {
   try {
-    const users = await userService.getAllUsers();
-    res.json(users);
+    const result = await userService.getAllUsers(req.query);
+    res.json(result);
   } catch (error) {
     next(error);
   }

@@ -48,6 +48,10 @@ const swaggerDefinition = {
   ],
   tags: [
     {
+      name: 'Health',
+      description: 'Verificación del estado del servidor (uptime, entorno). Disponible en cualquier entorno.',
+    },    
+    {
       name: 'Users',
       description: 'Alta, consulta y baja de usuarios (clientes, repartidores, tiendas y administradores).',
     },

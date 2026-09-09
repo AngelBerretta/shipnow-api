@@ -19,14 +19,6 @@ const LOG_LEVELS = {
   debug: 5,
 };
 
-const LOG_COLORS = {
-  fatal: 'red bold',
-  error: 'red',
-  warning: 'yellow',
-  info: 'green',
-  http: 'magenta',
-  debug: 'blue',
-};
 
 // Mapa propio de codigos ANSI, aplicado manualmente DESPUES de calcular
 // el padding sobre texto plano (ver buildLevelTag). Reemplaza al uso de

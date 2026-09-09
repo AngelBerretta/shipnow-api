@@ -10,6 +10,17 @@ entorno validada al arranque.
 >
 > 🧪 **Hay una suite de tests funcionales con Mocha, Chai y Supertest** — ver sección [Testing funcional](***REMOVED***testing-funcional-mocha-chai-y-supertest).
 
+***REMOVED******REMOVED*** Tecnologías
+
+- **Node.js** + **Express** — servidor HTTP y enrutamiento.
+- **MongoDB** + **Mongoose** — persistencia y modelado de datos.
+- **Winston** + **winston-daily-rotate-file** — logging centralizado con rotación.
+- **Multer** — carga de archivos multipart/form-data.
+- **Swagger** (`swagger-jsdoc` + `swagger-ui-express`) — documentación interactiva.
+- **Mocha** + **Chai** + **Supertest** — testing funcional end-to-end.
+- **Docker** + **docker-compose** — contenerización y entorno reproducible.
+- **ESLint** — linting de código.
+
 ***REMOVED******REMOVED*** Instalación y ejecución local
 
 1. Clonar el repositorio e instalar dependencias:
@@ -686,9 +697,8 @@ curl http://localhost:3000/api/products
 - `logs/` y `uploads/` (contenido generado en runtime; solo se versionan
   los `.gitkeep`).
 - `.git/`, `coverage/`, archivos temporales (`*.log`, `.DS_Store`, etc.).
-- `eslint.config.js` — excluido de la imagen mientras se limpia el
-  código malicioso encontrado en ese archivo (ver aviso de seguridad más
-  arriba).
+- `eslint.config.js` — excluido de la imagen final: es una dependencia de
+  desarrollo (lint), no hace falta para correr la API en producción.
 
 Todo esto está reflejado en `.gitignore` (repo) y `.dockerignore`
 (imagen).

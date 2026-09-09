@@ -36,4 +36,3 @@ Dockerfile
 .dockerignore
 docker-compose.yml
 eslint.config.js
-docs

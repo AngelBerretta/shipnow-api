@@ -49,5 +49,5 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  */

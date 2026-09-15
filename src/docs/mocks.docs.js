@@ -31,7 +31,7 @@
  *           type: string
  *           example: Mock4821!
  *         role:
- *           $ref: '***REMOVED***/components/schemas/Role'
+ *           $ref: '#/components/schemas/Role'
  *         documents:
  *           type: array
  *           items: {}
@@ -53,16 +53,16 @@
  *         items:
  *           type: array
  *           items:
- *             $ref: '***REMOVED***/components/schemas/OrderItem'
+ *             $ref: '#/components/schemas/OrderItem'
  *         deliveryAddress:
  *           type: string
  *           example: San Martin 2481, Chivilcoy
  *         total:
  *           type: number
  *         status:
- *           $ref: '***REMOVED***/components/schemas/OrderStatus'
+ *           $ref: '#/components/schemas/OrderStatus'
  *         priority:
- *           $ref: '***REMOVED***/components/schemas/Priority'
+ *           $ref: '#/components/schemas/Priority'
  *
  *     MockDelivery:
  *       type: object
@@ -75,9 +75,9 @@
  *           type: string
  *           description: ObjectId simulado o referenciado a un `MockUser` de la misma respuesta (según endpoint).
  *         status:
- *           $ref: '***REMOVED***/components/schemas/DeliveryStatus'
+ *           $ref: '#/components/schemas/DeliveryStatus'
  *         priority:
- *           $ref: '***REMOVED***/components/schemas/Priority'
+ *           $ref: '#/components/schemas/Priority'
  *         assignedAt:
  *           type: string
  *           format: date-time
@@ -146,15 +146,15 @@
  *             users:
  *               type: array
  *               items:
- *                 $ref: '***REMOVED***/components/schemas/User'
+ *                 $ref: '#/components/schemas/User'
  *             orders:
  *               type: array
  *               items:
- *                 $ref: '***REMOVED***/components/schemas/Order'
+ *                 $ref: '#/components/schemas/Order'
  *             deliveries:
  *               type: array
  *               items:
- *                 $ref: '***REMOVED***/components/schemas/Delivery'
+ *                 $ref: '#/components/schemas/Delivery'
  */
 
 /**
@@ -179,7 +179,7 @@
  *         required: false
  *         description: Filtra el rol generado. Si no se envía, el rol se sortea.
  *         schema:
- *           $ref: '***REMOVED***/components/schemas/Role'
+ *           $ref: '#/components/schemas/Role'
  *     responses:
  *       200:
  *         description: Usuarios simulados generados.
@@ -193,13 +193,13 @@
  *                 data:
  *                   type: array
  *                   items:
- *                     $ref: '***REMOVED***/components/schemas/MockUser'
+ *                     $ref: '#/components/schemas/MockUser'
  *       400:
  *         description: '`count` no numérico/negativo, o `role` fuera del enum permitido.'
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             examples:
  *               cantidadInvalida:
  *                 summary: count inválido
@@ -248,13 +248,13 @@
  *                 data:
  *                   type: array
  *                   items:
- *                     $ref: '***REMOVED***/components/schemas/MockOrder'
+ *                     $ref: '#/components/schemas/MockOrder'
  *       400:
  *         description: '`count` no numérico o negativo.'
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               success: false
  *               error:
@@ -292,13 +292,13 @@
  *                 data:
  *                   type: array
  *                   items:
- *                     $ref: '***REMOVED***/components/schemas/MockDelivery'
+ *                     $ref: '#/components/schemas/MockDelivery'
  *       400:
  *         description: '`count` no numérico o negativo.'
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *
  * /api/mocks/full:
  *   get:
@@ -341,21 +341,21 @@
  *                 users:
  *                   type: array
  *                   items:
- *                     $ref: '***REMOVED***/components/schemas/MockUser'
+ *                     $ref: '#/components/schemas/MockUser'
  *                 orders:
  *                   type: array
  *                   items:
- *                     $ref: '***REMOVED***/components/schemas/MockOrder'
+ *                     $ref: '#/components/schemas/MockOrder'
  *                 deliveries:
  *                   type: array
  *                   items:
- *                     $ref: '***REMOVED***/components/schemas/MockDelivery'
+ *                     $ref: '#/components/schemas/MockDelivery'
  *       400:
  *         description: Alguno de `users`, `orders` o `deliveries` no es numérico o es negativo.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               success: false
  *               error:
@@ -378,7 +378,7 @@
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '***REMOVED***/components/schemas/MockSeedRequest'
+ *             $ref: '#/components/schemas/MockSeedRequest'
  *           example:
  *             users: 8
  *             orders: 6
@@ -389,7 +389,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/MockSeedResponse'
+ *               $ref: '#/components/schemas/MockSeedResponse'
  *       400:
  *         description: >
  *           Cantidad inválida en `users`/`orders`/`deliveries`, o no hay
@@ -398,7 +398,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             examples:
  *               cantidadInvalida:
  *                 summary: Cantidad inválida
@@ -422,7 +422,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               success: false
  *               error:

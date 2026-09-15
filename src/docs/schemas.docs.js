@@ -7,7 +7,7 @@
  * lee directamente gracias al glob `apis` de `src/config/swagger.config.js`.
  *
  * Los demás archivos de `src/docs/` referencian estos schemas con
- * `$ref: '***REMOVED***/components/schemas/<Nombre>'` en vez de repetir la forma de
+ * `$ref: '#/components/schemas/<Nombre>'` en vez de repetir la forma de
  * cada entidad en cada endpoint.
  */
 
@@ -35,7 +35,7 @@
  *           format: email
  *           example: sofia.gomez@example.com
  *         role:
- *           $ref: '***REMOVED***/components/schemas/Role'
+ *           $ref: '#/components/schemas/Role'
  *
  *     Role:
  *       type: string
@@ -60,14 +60,14 @@
  *           format: email
  *           example: sofia.gomez@example.com
  *         role:
- *           $ref: '***REMOVED***/components/schemas/Role'
+ *           $ref: '#/components/schemas/Role'
  *         documents:
  *           type: array
  *           description: >
  *             Documentos cargados para este usuario (vacío por defecto). Se
  *             suman con `POST /api/users/{uid}/documents` — ver tag `Uploads`.
  *           items:
- *             $ref: '***REMOVED***/components/schemas/FileMetadata'
+ *             $ref: '#/components/schemas/FileMetadata'
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -95,7 +95,7 @@
  *           example: Secreta123!
  *         role:
  *           allOf:
- *             - $ref: '***REMOVED***/components/schemas/Role'
+ *             - $ref: '#/components/schemas/Role'
  *           description: >
  *             Opcional (default `customer`). El rol `admin` **no puede
  *             otorgarse por esta vía**: la API responde `403 FORBIDDEN_ACTION`
@@ -138,11 +138,11 @@
  *             En las respuestas (GET) viene populado con los datos del
  *             usuario. Al crear el pedido se envía solo el `_id`
  *             (ver `OrderInput`).
- *           $ref: '***REMOVED***/components/schemas/UserSummary'
+ *           $ref: '#/components/schemas/UserSummary'
  *         items:
  *           type: array
  *           items:
- *             $ref: '***REMOVED***/components/schemas/OrderItem'
+ *             $ref: '#/components/schemas/OrderItem'
  *         deliveryAddress:
  *           type: string
  *           example: Av. Rivadavia 1234, Chivilcoy
@@ -151,16 +151,16 @@
  *           description: Calculado por el servidor (suma de `price * quantity` de cada item).
  *           example: 31981
  *         status:
- *           $ref: '***REMOVED***/components/schemas/OrderStatus'
+ *           $ref: '#/components/schemas/OrderStatus'
  *         priority:
- *           $ref: '***REMOVED***/components/schemas/Priority'
+ *           $ref: '#/components/schemas/Priority'
  *         delivery:
  *           nullable: true
  *           description: >
  *             `null` hasta que se crea una entrega para el pedido
  *             (`POST /api/deliveries`). Cuando existe, viene populada con
  *             el objeto `Delivery` completo.
- *           $ref: '***REMOVED***/components/schemas/Delivery'
+ *           $ref: '#/components/schemas/Delivery'
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -180,13 +180,13 @@
  *           type: array
  *           minItems: 1
  *           items:
- *             $ref: '***REMOVED***/components/schemas/OrderItem'
+ *             $ref: '#/components/schemas/OrderItem'
  *         deliveryAddress:
  *           type: string
  *           example: Av. Rivadavia 1234, Chivilcoy
  *         priority:
  *           allOf:
- *             - $ref: '***REMOVED***/components/schemas/Priority'
+ *             - $ref: '#/components/schemas/Priority'
  *           description: Opcional (default `normal`).
  *
  *     OrderStatusUpdate:
@@ -194,13 +194,13 @@
  *       required: [status]
  *       properties:
  *         status:
- *           $ref: '***REMOVED***/components/schemas/OrderStatus'
+ *           $ref: '#/components/schemas/OrderStatus'
  *
  *     OrderCreatedResponse:
  *       type: object
  *       properties:
  *         order:
- *           $ref: '***REMOVED***/components/schemas/Order'
+ *           $ref: '#/components/schemas/Order'
  *         shippingCost:
  *           type: number
  *           description: 'Calculado como $10 por unidad pedida, sumando todos los items.'
@@ -222,14 +222,14 @@
  *           example: 66f1a2b3c4d5e6f7a8b9c0d3
  *         order:
  *           description: En las respuestas (GET) viene populado con el pedido completo.
- *           $ref: '***REMOVED***/components/schemas/Order'
+ *           $ref: '#/components/schemas/Order'
  *         driver:
  *           description: En las respuestas (GET) viene populado con los datos del repartidor.
- *           $ref: '***REMOVED***/components/schemas/UserSummary'
+ *           $ref: '#/components/schemas/UserSummary'
  *         status:
- *           $ref: '***REMOVED***/components/schemas/DeliveryStatus'
+ *           $ref: '#/components/schemas/DeliveryStatus'
  *         priority:
- *           $ref: '***REMOVED***/components/schemas/Priority'
+ *           $ref: '#/components/schemas/Priority'
  *         assignedAt:
  *           type: string
  *           format: date-time
@@ -244,7 +244,7 @@
  *             Comprobantes asociados a esta entrega (vacío por defecto). Se
  *             suman con `POST /api/deliveries/{did}/proof` — ver tag `Uploads`.
  *           items:
- *             $ref: '***REMOVED***/components/schemas/FileMetadata'
+ *             $ref: '#/components/schemas/FileMetadata'
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -266,7 +266,7 @@
  *           example: 66f1a2b3c4d5e6f7a8b9c0d1
  *         priority:
  *           allOf:
- *             - $ref: '***REMOVED***/components/schemas/Priority'
+ *             - $ref: '#/components/schemas/Priority'
  *           description: Opcional (default `normal`).
  *
  *     DeliveryStatusUpdate:
@@ -274,7 +274,7 @@
  *       required: [status]
  *       properties:
  *         status:
- *           $ref: '***REMOVED***/components/schemas/DeliveryStatus'
+ *           $ref: '#/components/schemas/DeliveryStatus'
  *
  *     ProductStatus:
  *       type: string
@@ -305,7 +305,7 @@
  *           type: string
  *           example: Electronica
  *         status:
- *           $ref: '***REMOVED***/components/schemas/ProductStatus'
+ *           $ref: '#/components/schemas/ProductStatus'
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -336,7 +336,7 @@
  *           example: Electronica
  *         status:
  *           allOf:
- *             - $ref: '***REMOVED***/components/schemas/ProductStatus'
+ *             - $ref: '#/components/schemas/ProductStatus'
  *           description: >
  *             Ignorado si `stock` queda en 0: el producto siempre pasa a
  *             `out_of_stock` sin importar el valor enviado acá.
@@ -380,7 +380,7 @@
  *           description: Tamaño del archivo en bytes.
  *           example: 204800
  *         documentType:
- *           $ref: '***REMOVED***/components/schemas/DocumentType'
+ *           $ref: '#/components/schemas/DocumentType'
  *         uploadedAt:
  *           type: string
  *           format: date-time
@@ -392,7 +392,7 @@
  *           type: string
  *           example: Documento cargado correctamente
  *         user:
- *           $ref: '***REMOVED***/components/schemas/User'
+ *           $ref: '#/components/schemas/User'
  *
  *     DeliveryProofUploadResponse:
  *       type: object
@@ -401,7 +401,7 @@
  *           type: string
  *           example: Comprobante asociado a la entrega correctamente
  *         delivery:
- *           $ref: '***REMOVED***/components/schemas/Delivery'
+ *           $ref: '#/components/schemas/Delivery'
  *
  *     ErrorResponse:
  *       type: object

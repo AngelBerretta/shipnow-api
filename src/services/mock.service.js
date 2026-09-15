@@ -57,7 +57,7 @@ class MockService {
   // -------------------------------------------------------------------
 
   previewUsers(count, role) {
-    const n = this.***REMOVED***parseCount(count, 10, MAX_PREVIEW_COUNT, 'count');
+    const n = this.#parseCount(count, 10, MAX_PREVIEW_COUNT, 'count');
 
     if (role && !Object.values(ROLES).includes(role)) {
       throw new InvalidRoleError(role, Object.values(ROLES));
@@ -68,13 +68,13 @@ class MockService {
   }
 
   previewOrders(count) {
-    const n = this.***REMOVED***parseCount(count, 10, MAX_PREVIEW_COUNT, 'count');
+    const n = this.#parseCount(count, 10, MAX_PREVIEW_COUNT, 'count');
     logger.debug(`Generando preview de ${n} pedido(s) mock`);
     return Array.from({ length: n }, () => mockGenerator.generateMockOrder());
   }
 
   previewDeliveries(count) {
-    const n = this.***REMOVED***parseCount(count, 10, MAX_PREVIEW_COUNT, 'count');
+    const n = this.#parseCount(count, 10, MAX_PREVIEW_COUNT, 'count');
     logger.debug(`Generando preview de ${n} entrega(s) mock`);
     return Array.from({ length: n }, () => mockGenerator.generateMockDelivery());
   }
@@ -85,9 +85,9 @@ class MockService {
    * ver de un vistazo la forma final de los datos relacionados.
    */
   previewFullDataset({ users, orders, deliveries } = {}) {
-    const usersCount = this.***REMOVED***parseCount(users, 5, MAX_PREVIEW_COUNT, 'users');
-    const ordersCount = this.***REMOVED***parseCount(orders, 5, MAX_PREVIEW_COUNT, 'orders');
-    const deliveriesCount = this.***REMOVED***parseCount(deliveries, 5, MAX_PREVIEW_COUNT, 'deliveries');
+    const usersCount = this.#parseCount(users, 5, MAX_PREVIEW_COUNT, 'users');
+    const ordersCount = this.#parseCount(orders, 5, MAX_PREVIEW_COUNT, 'orders');
+    const deliveriesCount = this.#parseCount(deliveries, 5, MAX_PREVIEW_COUNT, 'deliveries');
 
     logger.debug(
       `Generando preview de dataset completo (users: ${usersCount}, orders: ${ordersCount}, deliveries: ${deliveriesCount})`
@@ -127,9 +127,9 @@ class MockService {
   // -------------------------------------------------------------------
 
   async seedDatabase({ users, orders, deliveries } = {}) {
-    const usersCount = this.***REMOVED***parseCount(users, 10, MAX_SEED_COUNT, 'users');
-    const ordersCount = this.***REMOVED***parseCount(orders, 10, MAX_SEED_COUNT, 'orders');
-    const deliveriesCount = this.***REMOVED***parseCount(deliveries, 5, MAX_SEED_COUNT, 'deliveries');
+    const usersCount = this.#parseCount(users, 10, MAX_SEED_COUNT, 'users');
+    const ordersCount = this.#parseCount(orders, 10, MAX_SEED_COUNT, 'orders');
+    const deliveriesCount = this.#parseCount(deliveries, 5, MAX_SEED_COUNT, 'deliveries');
 
     const warnings = [];
 
@@ -138,9 +138,9 @@ class MockService {
     );
 
     try {
-      const createdUsers = await this.***REMOVED***seedUsers(usersCount);
-      const createdOrders = await this.***REMOVED***seedOrders(ordersCount, createdUsers, warnings);
-      const createdDeliveries = await this.***REMOVED***seedDeliveries(deliveriesCount, createdUsers, createdOrders, warnings);
+      const createdUsers = await this.#seedUsers(usersCount);
+      const createdOrders = await this.#seedOrders(ordersCount, createdUsers, warnings);
+      const createdDeliveries = await this.#seedDeliveries(deliveriesCount, createdUsers, createdOrders, warnings);
 
       logger.info(
         `Carga de datos de prueba finalizada: ${createdUsers.length} usuario(s), ${createdOrders.length} pedido(s), ${createdDeliveries.length} entrega(s) creados`
@@ -184,7 +184,7 @@ class MockService {
   // Helpers privados de seeding
   // -------------------------------------------------------------------
 
-  async ***REMOVED***seedUsers(count) {
+  async #seedUsers(count) {
     const created = [];
     for (let i = 0; i < count; i += 1) {
       const role = SEED_ROLE_CYCLE[i % SEED_ROLE_CYCLE.length];
@@ -195,7 +195,7 @@ class MockService {
     return created;
   }
 
-  async ***REMOVED***seedOrders(count, createdUsers, warnings) {
+  async #seedOrders(count, createdUsers, warnings) {
     if (count === 0) return [];
 
     let customers = createdUsers.filter((user) => user.role === ROLES.CUSTOMER);
@@ -230,7 +230,7 @@ class MockService {
     return created;
   }
 
-  async ***REMOVED***seedDeliveries(count, createdUsers, createdOrders, warnings) {
+  async #seedDeliveries(count, createdUsers, createdOrders, warnings) {
     if (count === 0) return [];
 
     let drivers = createdUsers.filter((user) => user.role === ROLES.DRIVER);
@@ -287,7 +287,7 @@ class MockService {
    * numericos o negativos con un InvalidMockQuantityError (400),
    * identificando el parametro (`fieldName`) que fallo.
    */
-  ***REMOVED***parseCount(value, defaultValue, max, fieldName) {
+  #parseCount(value, defaultValue, max, fieldName) {
     if (value === undefined || value === null || value === '') {
       return defaultValue;
     }

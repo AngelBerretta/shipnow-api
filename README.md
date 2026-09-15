@@ -1,16 +1,16 @@
-***REMOVED*** ShipNow API
+# ShipNow API
 
 API de logística de ShipNow, refactorizada a una arquitectura profesional
 por capas (**Controller → Service → Repository**) con configuración de
 entorno validada al arranque.
 
-> 📋 **Este proyecto usa [Winston](https://github.com/winstonjs/winston) para logging** — ver sección [Sistema de logging](***REMOVED***sistema-de-logging).
+> 📋 **Este proyecto usa [Winston](https://github.com/winstonjs/winston) para logging** — ver sección [Sistema de logging](#sistema-de-logging).
 >
-> 📖 **La API está documentada con Swagger/OpenAPI** en `/api/docs` — ver sección [Documentación de la API (Swagger)](***REMOVED***documentación-de-la-api-swagger).
+> 📖 **La API está documentada con Swagger/OpenAPI** en `/api/docs` — ver sección [Documentación de la API (Swagger)](#documentación-de-la-api-swagger).
 >
-> 🧪 **Hay una suite de tests funcionales con Mocha, Chai y Supertest** — ver sección [Testing funcional](***REMOVED***testing-funcional-mocha-chai-y-supertest).
+> 🧪 **Hay una suite de tests funcionales con Mocha, Chai y Supertest** — ver sección [Testing funcional](#testing-funcional-mocha-chai-y-supertest).
 
-***REMOVED******REMOVED*** Tecnologías
+## Tecnologías
 
 - **Node.js** + **Express** — servidor HTTP y enrutamiento.
 - **MongoDB** + **Mongoose** — persistencia y modelado de datos.
@@ -21,7 +21,7 @@ entorno validada al arranque.
 - **Docker** + **docker-compose** — contenerización y entorno reproducible.
 - **ESLint** — linting de código.
 
-***REMOVED******REMOVED*** Instalación y ejecución local
+## Instalación y ejecución local
 
 1. Clonar el repositorio e instalar dependencias:
 
@@ -55,29 +55,29 @@ aplicación **no arranca** y muestra un error descriptivo indicando qué
 variable falta, en lugar de fallar de forma silenciosa o más adelante al
 intentar usarla.
 
-***REMOVED******REMOVED*** Arquitectura
+## Arquitectura
 
 ```
 src/
-├── config/          ***REMOVED*** Configuración de entorno, logger (Winston) y Swagger
-├── constants/        ***REMOVED*** Diccionario de roles y estados (Object.freeze)
-├── docs/              ***REMOVED*** Documentación OpenAPI (@openapi), separada de routes/
-├── models/            ***REMOVED*** Esquemas de Mongoose (sin lógica de negocio)
-├── repositories/     ***REMOVED*** Único lugar que conoce Mongoose/MongoDB
-├── services/          ***REMOVED*** Lógica de negocio (incluye mock.service.js)
-├── controllers/       ***REMOVED*** Única puerta de entrada HTTP (req/res)
-├── routes/            ***REMOVED*** Solo conectan path + método HTTP con el Controller
-├── errors/            ***REMOVED*** Capa de manejo de errores (codigos, diccionario, clases de dominio)
-├── middlewares/       ***REMOVED*** Manejo central de errores y 404
-├── utils/             ***REMOVED*** Helpers puros (mock.generator.js)
-├── app.js             ***REMOVED*** Configuración de Express, Swagger y montaje de rutas (SIN levantar el server)
-└── server.js          ***REMOVED*** Composition root: conecta a Mongo y levanta el server
+├── config/          # Configuración de entorno, logger (Winston) y Swagger
+├── constants/        # Diccionario de roles y estados (Object.freeze)
+├── docs/              # Documentación OpenAPI (@openapi), separada de routes/
+├── models/            # Esquemas de Mongoose (sin lógica de negocio)
+├── repositories/     # Único lugar que conoce Mongoose/MongoDB
+├── services/          # Lógica de negocio (incluye mock.service.js)
+├── controllers/       # Única puerta de entrada HTTP (req/res)
+├── routes/            # Solo conectan path + método HTTP con el Controller
+├── errors/            # Capa de manejo de errores (codigos, diccionario, clases de dominio)
+├── middlewares/       # Manejo central de errores y 404
+├── utils/             # Helpers puros (mock.generator.js)
+├── app.js             # Configuración de Express, Swagger y montaje de rutas (SIN levantar el server)
+└── server.js          # Composition root: conecta a Mongo y levanta el server
 
 test/
-├── setup.js           ***REMOVED*** Entorno de testing + conexión/limpieza de Mongo (ver Testing funcional)
+├── setup.js           # Entorno de testing + conexión/limpieza de Mongo (ver Testing funcional)
 ├── helpers/
-│   └── fixtures.js    ***REMOVED*** Datos de prueba controlados, creados via la propia API
-└── *.test.js          ***REMOVED*** Un archivo por módulo (users, orders, mocks, logs, docs, 404)
+│   └── fixtures.js    # Datos de prueba controlados, creados via la propia API
+└── *.test.js          # Un archivo por módulo (users, orders, mocks, logs, docs, 404)
 ```
 
 `app.js` exporta la app de Express ya configurada pero **sin** llamar a
@@ -91,7 +91,7 @@ El Controller nunca importa `mongoose` ni los modelos directamente; solo
 conoce el Service correspondiente. El Repository nunca contiene reglas de
 negocio: solo sabe buscar y persistir datos.
 
-***REMOVED******REMOVED******REMOVED*** ¿Por qué separar la lógica entre Service y Repository?
+### ¿Por qué separar la lógica entre Service y Repository?
 
 La regla que seguí fue: **el Repository responde "¿cómo se guarda/busca
 esto en MongoDB?" y el Service responde "¿qué debe pasar según las reglas
@@ -115,7 +115,7 @@ Mantener esta separación permite:
   devuelve el campo `password`), en vez de ser un `return Model.find()`
   desnudo.
 
-***REMOVED******REMOVED*** Documentación de la API (Swagger)
+## Documentación de la API (Swagger)
 
 Con el servidor levantado, la documentación interactiva está disponible en:
 
@@ -127,7 +127,7 @@ Desde ahí se puede ver cada endpoint agrupado por módulo y probarlo directamen
 con el botón **"Try it out"** (Swagger UI arma y ejecuta el `curl` real contra
 el servidor local).
 
-***REMOVED******REMOVED******REMOVED*** Qué está documentado
+### Qué está documentado
 
 Todos los endpoints montados en `app.js`, agrupados por tag:
 
@@ -146,7 +146,7 @@ con ejemplos concretos tomados del comportamiento real de los Services (no
 hay respuestas ni errores "inventados": lo que se ve en `/api/docs` es lo que
 la API efectivamente devuelve).
 
-***REMOVED******REMOVED******REMOVED*** Schemas reutilizables
+### Schemas reutilizables
 
 En vez de repetir la forma de cada entidad en cada endpoint, `/api/docs`
 define schemas reutilizables (`components.schemas`) que se referencian con
@@ -158,7 +158,7 @@ define schemas reutilizables (`components.schemas`) que se referencian con
 - `Delivery` / `DeliveryInput` / `DeliveryStatusUpdate`.
 - `OrderItem` (item individual de un pedido).
 - `ErrorResponse` — forma uniforme de **toda** respuesta de error de la API
-  (ver [Manejo centralizado de errores](***REMOVED***manejo-centralizado-de-errores)),
+  (ver [Manejo centralizado de errores](#manejo-centralizado-de-errores)),
   con el `code` documentado como enum con los 19 códigos reales de
   `errorCodes.js`.
 - `SuccessResponse` — respuesta genérica `{ "message": "..." }` que devuelven
@@ -167,7 +167,7 @@ define schemas reutilizables (`components.schemas`) que se referencian con
   mocks (`MockUser`, `MockOrder`, `MockDelivery`, `MockSeedRequest`,
   `MockSeedResponse`).
 
-***REMOVED******REMOVED******REMOVED*** Cómo está organizado el código de la documentación
+### Cómo está organizado el código de la documentación
 
 La configuración de Swagger está **separada de la lógica de rutas**, en dos
 carpetas distintas:
@@ -175,18 +175,18 @@ carpetas distintas:
 ```
 src/
 ├── config/
-│   └── swagger.config.js   ***REMOVED*** Arma el spec con swagger-jsdoc y expone
+│   └── swagger.config.js   # Arma el spec con swagger-jsdoc y expone
 │                              setupSwagger(app), la única función que
 │                              app.js llama para montar Swagger UI en
 │                              /api/docs. No conoce routes/ ni controllers/.
 └── docs/
-    ├── schemas.docs.js      ***REMOVED*** components.schemas reutilizables
-    ├── users.docs.js        ***REMOVED*** paths de /api/users (tag Users)
-    ├── orders.docs.js       ***REMOVED*** paths de /api/orders (tag Orders)
-    ├── deliveries.docs.js   ***REMOVED*** paths de /api/deliveries (tag Deliveries)
-    ├── products.docs.js     ***REMOVED*** paths de /api/products (tag Products)
-    ├── mocks.docs.js        ***REMOVED*** paths de /api/mocks (tag Mocks) + sus schemas
-    └── logs.docs.js         ***REMOVED*** path de /api/logs/test (tag Logger)
+    ├── schemas.docs.js      # components.schemas reutilizables
+    ├── users.docs.js        # paths de /api/users (tag Users)
+    ├── orders.docs.js       # paths de /api/orders (tag Orders)
+    ├── deliveries.docs.js   # paths de /api/deliveries (tag Deliveries)
+    ├── products.docs.js     # paths de /api/products (tag Products)
+    ├── mocks.docs.js        # paths de /api/mocks (tag Mocks) + sus schemas
+    └── logs.docs.js         # path de /api/logs/test (tag Logger)
 ```
 
 Los archivos de `src/docs/` **solo contienen bloques de comentarios
@@ -196,7 +196,7 @@ mediante el glob `apis: ['./src/docs/*.docs.js']` configurado en
 `swagger.config.js`. `app.js` no arma la documentación: solo importa
 `setupSwagger` y la llama una vez, igual que monta cualquier otro router.
 
-***REMOVED******REMOVED******REMOVED*** Aclaraciones para probar los endpoints
+### Aclaraciones para probar los endpoints
 
 - La API **no implementa autenticación**: todos los endpoints de `/api/docs`
   son de acceso libre, sin token ni API key.
@@ -204,13 +204,13 @@ mediante el glob `apis: ['./src/docs/*.docs.js']` configurado en
   crear una entrega necesita un pedido en estado `created` y un usuario con
   rol `driver`), lo más rápido es sembrar la base primero con
   `POST /api/mocks/generate` (ver
-  [Mocking y carga de datos de prueba](***REMOVED***mocking-y-carga-de-datos-de-prueba))
+  [Mocking y carga de datos de prueba](#mocking-y-carga-de-datos-de-prueba))
   y después copiar los `_id` reales de la respuesta.
 - Los ejemplos de error que se ven en cada endpoint (`400`, `403`, `404`,
   `409`, `500`) son los mensajes y `code` reales que devuelve
   `errorDictionary.js`, no texto genérico.
 
-***REMOVED******REMOVED*** Manejo centralizado de errores
+## Manejo centralizado de errores
 
 Ninguna ruta ni controller arma una respuesta de error a mano. El flujo es
 siempre el mismo:
@@ -226,19 +226,19 @@ Vive en dos carpetas:
 ```
 src/
 ├── errors/
-│   ├── errorCodes.js        ***REMOVED*** Enum de codigos de error (VALIDATION_ERROR, USER_NOT_FOUND, ...)
-│   ├── errorDictionary.js   ***REMOVED*** codigo -> { statusCode, message por defecto }
-│   ├── ApiError.js          ***REMOVED*** Clase base: toda excepcion de dominio nace de un codigo del diccionario
-│   ├── notFound.errors.js   ***REMOVED*** UserNotFoundError, OrderNotFoundError, DeliveryNotFoundError, ProductNotFoundError
-│   ├── conflict.errors.js   ***REMOVED*** DuplicateEmailError, OrderAlreadyProcessedError, OrderAlreadyDeliveredError, DeliveryAlreadyCompletedError
-│   ├── mock.errors.js       ***REMOVED*** InvalidMockQuantityError, MockGenerationError
+│   ├── errorCodes.js        # Enum de codigos de error (VALIDATION_ERROR, USER_NOT_FOUND, ...)
+│   ├── errorDictionary.js   # codigo -> { statusCode, message por defecto }
+│   ├── ApiError.js          # Clase base: toda excepcion de dominio nace de un codigo del diccionario
+│   ├── notFound.errors.js   # UserNotFoundError, OrderNotFoundError, DeliveryNotFoundError, ProductNotFoundError
+│   ├── conflict.errors.js   # DuplicateEmailError, OrderAlreadyProcessedError, OrderAlreadyDeliveredError, DeliveryAlreadyCompletedError
+│   ├── mock.errors.js       # InvalidMockQuantityError, MockGenerationError
 │   ├── ValidationError.js / InvalidStatusError.js / InvalidRoleError.js / ForbiddenActionError.js
-│   └── index.js             ***REMOVED*** Barrel: unico punto de import para el resto de la app
+│   └── index.js             # Barrel: unico punto de import para el resto de la app
 └── middlewares/
-    └── errorHandler.js      ***REMOVED*** errorHandler (siempre al final de app.js) + notFoundHandler (404 de ruta)
+    └── errorHandler.js      # errorHandler (siempre al final de app.js) + notFoundHandler (404 de ruta)
 ```
 
-***REMOVED******REMOVED******REMOVED*** Por que un diccionario en vez de un `statusCode` en cada `throw`
+### Por que un diccionario en vez de un `statusCode` en cada `throw`
 
 Antes, cada Service decidia el status HTTP a mano: `new ApiError(404, 'Usuario no encontrado')`,
 `new ApiError(409, 'El email ya esta registrado')`, repitiendo el numero y el mensaje en cada
@@ -249,7 +249,7 @@ Sumar un caso de error nuevo es: (1) agregar la constante en `errorCodes.js`, (2
 entrada en `errorDictionary.js`, (3) opcionalmente crear una clase con nombre en `src/errors/`
 para que el Service no tenga que conocer el codigo exacto.
 
-***REMOVED******REMOVED******REMOVED*** Formato de respuesta
+### Formato de respuesta
 
 Toda respuesta de error de la API (400, 403, 404, 409, 500) tiene la misma forma:
 
@@ -267,7 +267,7 @@ Toda respuesta de error de la API (400, 403, 404, 409, 500) tiene la misma forma
 `details` es opcional: solo aparece cuando el error tiene informacion adicional util para el
 cliente (valores permitidos de un estado invalido, el campo que fallo una validacion, etc.).
 
-***REMOVED******REMOVED******REMOVED*** Errores que el middleware traduce aunque no los haya lanzado un Service
+### Errores que el middleware traduce aunque no los haya lanzado un Service
 
 `errorHandler` tambien normaliza errores "externos" que Mongoose o Express pueden tirar antes
 de que la logica de negocio llegue a evaluarse, para que la respuesta sea igual de uniforme:
@@ -282,7 +282,7 @@ de que la logica de negocio llegue a evaluarse, para que la respuesta sea igual 
 | Multer `MulterError` (`LIMIT_UNEXPECTED_FILE`) | El archivo llego en un campo distinto a `file` | `400 UNEXPECTED_FILE_FIELD` |
 | Cualquier otro error no reconocido | Bug o falla inesperada | `500 INTERNAL_ERROR` (se loguea completo en el servidor, nunca se expone el detalle interno al cliente) |
 
-***REMOVED******REMOVED******REMOVED*** Validaciones del módulo de carga de archivos
+### Validaciones del módulo de carga de archivos
 
 `upload.service.js` combina dos fuentes de error distintas, ambas terminando en el mismo
 `ApiError`: las que detecta Multer mecanicamente (antes de que el archivo llegue al Service) y las
@@ -301,7 +301,7 @@ que son reglas de negocio (despues):
   dos validaciones falla el Service borra el archivo recien guardado (`removeUploadedFile`) antes
   de propagar el error. Un archivo nunca queda en `uploads/` sin su metadato asociado en Mongo.
 
-***REMOVED******REMOVED******REMOVED*** Validaciones del módulo de mocks
+### Validaciones del módulo de mocks
 
 `mock.service.js` usa la misma capa de errores para sus dos responsabilidades:
 
@@ -317,7 +317,7 @@ que son reglas de negocio (despues):
   negocio ya controlada (por ejemplo, `400 VALIDATION_ERROR` porque no hay usuarios "customer"
   para asociar pedidos), ese error se propaga tal cual, sin envolverlo.
 
-***REMOVED******REMOVED*** Sistema de logging
+## Sistema de logging
 
 ShipNow reemplaza el uso de `console.log`/`console.error` sueltos por un
 logger centralizado construido sobre **Winston**, integrado con la capa de
@@ -325,14 +325,14 @@ manejo de errores y con persistencia en archivos rotados.
 
 ```
 src/config/
-└── logger.config.js   ***REMOVED*** Unica configuracion de Winston de todo el proyecto
+└── logger.config.js   # Unica configuracion de Winston de todo el proyecto
 ```
 
 Ningún otro archivo crea una instancia propia de `winston.createLogger()`:
 todos importan el logger ya configurado desde `src/config/logger.config.js`
 (o desde el barrel `src/config/index.js`, como `{ logger }`).
 
-***REMOVED******REMOVED******REMOVED*** Niveles de log
+### Niveles de log
 
 Se definieron 6 niveles personalizados (no los niveles npm por defecto de
 Winston), de más a menos severo:
@@ -346,11 +346,11 @@ Winston), de más a menos severo:
 | `http` | 4 | Reservado para tráfico HTTP (usado hoy solo por el endpoint de prueba del logger) |
 | `debug` | 5 (mínima) | Detalle de desarrollo: simulación de envío de email, generación de datos mock en memoria (preview) |
 
-***REMOVED******REMOVED******REMOVED*** Comportamiento según el entorno
+### Comportamiento según el entorno
 
 El nivel mínimo que efectivamente se registra depende de `NODE_ENV`
 (variable ya validada por `src/config/env.config.js`, ver sección
-[Variables de entorno](***REMOVED***variables-de-entorno)):
+[Variables de entorno](#variables-de-entorno)):
 
 | `NODE_ENV` | Nivel mínimo | Niveles visibles |
 |---|---|---|
@@ -362,7 +362,7 @@ Esto aplica tanto a la consola como al archivo `combined-*.log`. El archivo
 `error-*.log`, en cambio, **siempre** registra únicamente `error` y `fatal`,
 sin importar el entorno (ver más abajo).
 
-***REMOVED******REMOVED******REMOVED*** Integración con el manejo de errores
+### Integración con el manejo de errores
 
 El middleware global (`src/middlewares/errorHandler.js`) usa el logger para
 dejar registro de cada error que pasa por él, sin cambiar la respuesta HTTP
@@ -380,17 +380,17 @@ El logger **complementa** el manejo de errores, no lo reemplaza: la
 respuesta al cliente sigue siendo siempre la misma estructura uniforme
 descrita en la sección anterior, se haya podido loguear o no.
 
-***REMOVED******REMOVED******REMOVED*** Persistencia en archivos y rotación
+### Persistencia en archivos y rotación
 
 Los logs se persisten en la carpeta `logs/` (creada automáticamente al
 arrancar la app si no existe), usando `winston-daily-rotate-file`:
 
 ```
 logs/
-├── .gitkeep                      ***REMOVED*** unico archivo versionado en Git
-├── combined-YYYY-MM-DD.log       ***REMOVED*** todos los niveles que pasen el filtro del entorno
-├── error-YYYY-MM-DD.log          ***REMOVED*** SOLO niveles error y fatal, sin importar el entorno
-└── error-YYYY-MM-DD.log.N.gz     ***REMOVED*** archivos rotados y comprimidos automaticamente
+├── .gitkeep                      # unico archivo versionado en Git
+├── combined-YYYY-MM-DD.log       # todos los niveles que pasen el filtro del entorno
+├── error-YYYY-MM-DD.log          # SOLO niveles error y fatal, sin importar el entorno
+└── error-YYYY-MM-DD.log.N.gz     # archivos rotados y comprimidos automaticamente
 ```
 
 Política de rotación:
@@ -405,7 +405,7 @@ Política de rotación:
 > esperado de la rotación por fecha: el contenido —solo `error`/`fatal`—
 > se mantiene igual sin importar el nombre exacto del archivo del día.
 
-***REMOVED******REMOVED******REMOVED*** Qué se ignora en Git
+### Qué se ignora en Git
 
 ```gitignore
 logs/*
@@ -418,7 +418,7 @@ parte del diseño del proyecto). Todo el resto del contenido de `logs/`
 —incluidos los `.log`, `.log.N` y `.log.N.gz`— se genera en tiempo de
 ejecución y nunca se sube al repositorio.
 
-***REMOVED******REMOVED******REMOVED*** Endpoint de prueba del logger
+### Endpoint de prueba del logger
 
 Existe un endpoint exclusivamente de testing interno (no representa
 ninguna funcionalidad de negocio de ShipNow) para verificar rápidamente
@@ -453,19 +453,19 @@ prueba.
 Qué revisar según el entorno:
 
 ```bash
-***REMOVED*** En desarrollo: deberias ver los 6 niveles en consola
+# En desarrollo: deberias ver los 6 niveles en consola
 npm run dev
 curl http://localhost:3000/api/logs/test
 
-***REMOVED*** En produccion: solo deberian verse info, warning, error y fatal
+# En produccion: solo deberian verse info, warning, error y fatal
 NODE_ENV=production npm start
 curl http://localhost:3000/api/logs/test
 
-***REMOVED*** El archivo de errores solo debe tener error y fatal, en cualquier entorno
+# El archivo de errores solo debe tener error y fatal, en cualquier entorno
 cat logs/error-$(date +%Y-%m-%d).log
 ```
 
-***REMOVED******REMOVED*** Performance
+## Performance
 
 - **Paginación en los listados grandes.** `GET /api/users`,
   `GET /api/orders`, `GET /api/deliveries` y `GET /api/products` ya NO
@@ -522,9 +522,9 @@ cat logs/error-$(date +%Y-%m-%d).log
   arrancar el proceso, antes de levantar el servidor — no ocurren en el
   Event Loop de ningún request, así que no lo bloquean.
 
-***REMOVED******REMOVED*** Preparación para producción
+## Preparación para producción
 
-***REMOVED******REMOVED******REMOVED*** Variables de entorno
+### Variables de entorno
 
 Hay tres plantillas, una por entorno, todas fuera del repo real (el
 `.gitignore` ya ignora `.env`, `.env.local` y `.env.test`; el `.env`
@@ -558,7 +558,7 @@ Ningún valor sensible está escrito en el código: todo se lee desde
 `process.env` a través de `src/config/env.config.js`, el único archivo
 del proyecto que debe tocar `process.env` directamente.
 
-***REMOVED******REMOVED******REMOVED*** Validación al arrancar
+### Validación al arrancar
 
 `src/config/env.config.js` valida, antes de conectar a Mongo o levantar
 el servidor:
@@ -573,11 +573,11 @@ sin su configuración completa).
 
 ```bash
 $ PORT= npm start
-***REMOVED*** [config] Faltan variables de entorno obligatorias: PORT. Revisa tu
-***REMOVED*** archivo .env (podes tomar como referencia .env.example).
+# [config] Faltan variables de entorno obligatorias: PORT. Revisa tu
+# archivo .env (podes tomar como referencia .env.example).
 ```
 
-***REMOVED******REMOVED******REMOVED*** Health check
+### Health check
 
 ```
 GET /api/health
@@ -596,7 +596,7 @@ secretos, ni stack traces):
 }
 ```
 
-***REMOVED******REMOVED******REMOVED*** Endpoints internos en producción (criterio aplicado)
+### Endpoints internos en producción (criterio aplicado)
 
 Swagger (`/api/docs`), `/api/mocks` y `/api/logs/test` **se deshabilitan
 por defecto cuando `NODE_ENV=production`**. Razón: no son funcionalidad
@@ -611,22 +611,22 @@ staging donde el equipo todavía usa Swagger para probar), se pueden
 reactivar explícitamente con `ENABLE_INTERNAL_ROUTES=true`. La lógica
 completa vive en `src/app.js`.
 
-***REMOVED******REMOVED******REMOVED*** Apagado ordenado (graceful shutdown)
+### Apagado ordenado (graceful shutdown)
 
 `src/server.js` escucha `SIGTERM`/`SIGINT` (las señales que Docker envía
 al hacer `docker stop`): deja de aceptar conexiones nuevas, espera a que
 terminen las peticiones en curso, cierra la conexión a MongoDB y recién
 ahí termina el proceso — en vez de cortar conexiones HTTP de golpe.
 
-***REMOVED******REMOVED*** Docker
+## Docker
 
-***REMOVED******REMOVED******REMOVED*** Construir la imagen
+### Construir la imagen
 
 ```bash
 docker build -t shipnow-api .
 ```
 
-***REMOVED******REMOVED******REMOVED*** Ejecutar el contenedor
+### Ejecutar el contenedor
 
 Con variables sueltas:
 
@@ -660,15 +660,15 @@ probar todo junto):
 docker compose up --build
 ```
 
-***REMOVED******REMOVED******REMOVED*** Probar que quedó levantada
+### Probar que quedó levantada
 
 ```bash
 curl http://localhost:3000/api/health
-curl http://localhost:3000/api/docs         ***REMOVED*** solo si ENABLE_INTERNAL_ROUTES=true en producción, o NODE_ENV != production
+curl http://localhost:3000/api/docs         # solo si ENABLE_INTERNAL_ROUTES=true en producción, o NODE_ENV != production
 curl http://localhost:3000/api/products
 ```
 
-***REMOVED******REMOVED******REMOVED*** Detalles de la imagen
+### Detalles de la imagen
 
 - Base: `node:20-alpine`.
 - Solo dependencias de producción (`npm ci --omit=dev`): eslint, mocha,
@@ -689,7 +689,7 @@ curl http://localhost:3000/api/products
     shipnow-api
   ```
 
-***REMOVED******REMOVED******REMOVED*** Qué NO debe subirse al repo ni entrar a la imagen
+### Qué NO debe subirse al repo ni entrar a la imagen
 
 - `.env`, `.env.local`, `.env.test`, `.env.production` (cualquier `.env`
   real, con valores verdaderos).
@@ -703,28 +703,28 @@ curl http://localhost:3000/api/products
 Todo esto está reflejado en `.gitignore` (repo) y `.dockerignore`
 (imagen).
 
-***REMOVED******REMOVED*** Resumen rápido de comandos
+## Resumen rápido de comandos
 
 ```bash
-***REMOVED*** Desarrollo local
-cp .env.example .env            ***REMOVED*** completar valores
+# Desarrollo local
+cp .env.example .env            # completar valores
 npm install
 npm run dev
 
-***REMOVED*** Tests
-cp .env.test.example .env.test  ***REMOVED*** completar valores (Mongo de testing)
+# Tests
+cp .env.test.example .env.test  # completar valores (Mongo de testing)
 npm test
 
-***REMOVED*** Swagger (con el server corriendo)
+# Swagger (con el server corriendo)
 open http://localhost:3000/api/docs
 
-***REMOVED*** Docker
+# Docker
 docker build -t shipnow-api .
 docker run -d -p 3000:3000 --env-file .env.production shipnow-api
 curl http://localhost:3000/api/health
 ```
 
-***REMOVED******REMOVED*** Variables de entorno
+## Variables de entorno
 
 | Variable      | Descripción                                   | Ejemplo                              |
 |---------------|------------------------------------------------|---------------------------------------|
@@ -732,39 +732,39 @@ curl http://localhost:3000/api/health
 | `MONGODB_URI` | Cadena de conexión a MongoDB                    | `mongodb://localhost:27017/shipnow`   |
 | `NODE_ENV`    | Entorno de ejecución                            | `development`                         |
 
-> Ver también [Preparación para producción → Variables de entorno](***REMOVED***variables-de-entorno-1)
+> Ver también [Preparación para producción → Variables de entorno](#variables-de-entorno-1)
 > para el detalle completo de variables opcionales (`LOG_LEVEL`, `JWT_SECRET`,
 > `CORS_ORIGIN`, `EMAIL_SERVICE_URL`, `ENABLE_INTERNAL_ROUTES`) y las plantillas
 > por entorno (`.env.example`, `.env.test.example`, `.env.production.example`).
 
-***REMOVED******REMOVED*** Endpoints
+## Endpoints
 
 > ⚠️ **Nota de compatibilidad:** `GET /api/users`, `GET /api/orders`,
 > `GET /api/deliveries` y `GET /api/products` ya no devuelven un arreglo
 > plano: ahora devuelven `{ data: [...], pagination: { page, limit, total,
 > totalPages } }`, y aceptan `?page`/`?limit` además de sus filtros
-> habituales. Ver detalle en [Performance](***REMOVED***performance).
+> habituales. Ver detalle en [Performance](#performance).
 
 | Método | Ruta                          | Descripción                |
 |--------|-------------------------------|-----------------------------|
-| GET    | /api/docs                     | Documentación interactiva (Swagger UI) — ver [Documentación de la API (Swagger)](***REMOVED***documentación-de-la-api-swagger) |
-| GET    | /api/health                    | Health check — ver [Preparación para producción](***REMOVED***preparación-para-producción) |
-| GET    | /api/users                    | Listar usuarios (paginado, ver [Performance](***REMOVED***performance)) |
+| GET    | /api/docs                     | Documentación interactiva (Swagger UI) — ver [Documentación de la API (Swagger)](#documentación-de-la-api-swagger) |
+| GET    | /api/health                    | Health check — ver [Preparación para producción](#preparación-para-producción) |
+| GET    | /api/users                    | Listar usuarios (paginado, ver [Performance](#performance)) |
 | GET    | /api/users/:uid                | Obtener usuario por ID        |
 | POST   | /api/users                    | Crear usuario                |
 | DELETE | /api/users/:uid                | Eliminar usuario              |
 | POST   | /api/users/:uid/documents       | Cargar un documento de usuario (DNI, licencia, etc.) |
-| GET    | /api/products                  | Listar productos (paginado, ver [Performance](***REMOVED***performance)) |
+| GET    | /api/products                  | Listar productos (paginado, ver [Performance](#performance)) |
 | GET    | /api/products/:pid              | Obtener producto por ID        |
 | POST   | /api/products                  | Crear producto                |
 | PUT    | /api/products/:pid              | Actualizar producto            |
 | DELETE | /api/products/:pid              | Eliminar producto              |
-| GET    | /api/orders                    | Listar pedidos (paginado, ver [Performance](***REMOVED***performance)) |
+| GET    | /api/orders                    | Listar pedidos (paginado, ver [Performance](#performance)) |
 | GET    | /api/orders/:oid                | Obtener pedido por ID          |
 | POST   | /api/orders                    | Crear pedido                  |
 | PATCH  | /api/orders/:oid/status          | Actualizar estado pedido       |
 | DELETE | /api/orders/:oid                | Eliminar pedido                |
-| GET    | /api/deliveries                | Listar entregas (paginado, ver [Performance](***REMOVED***performance)) |
+| GET    | /api/deliveries                | Listar entregas (paginado, ver [Performance](#performance)) |
 | GET    | /api/deliveries/:did             | Obtener entrega por ID          |
 | POST   | /api/deliveries                | Crear entrega                  |
 | PATCH  | /api/deliveries/:did/status       | Actualizar estado entrega       |
@@ -777,11 +777,11 @@ curl http://localhost:3000/api/health
 | POST   | /api/mocks/generate              | Insertar datos de prueba reales en MongoDB |
 | GET    | /api/logs/test                   | Endpoint interno de testing: dispara los 6 niveles del logger |
 
-Ver la sección [Mocking y carga de datos de prueba](***REMOVED***mocking-y-carga-de-datos-de-prueba) para el
-detalle de esos endpoints, y [Carga de archivos (Multer)](***REMOVED***carga-de-archivos-multer) para el
+Ver la sección [Mocking y carga de datos de prueba](#mocking-y-carga-de-datos-de-prueba) para el
+detalle de esos endpoints, y [Carga de archivos (Multer)](#carga-de-archivos-multer) para el
 detalle de `/documents` y `/proof`.
 
-***REMOVED******REMOVED*** Constantes de dominio
+## Constantes de dominio
 
 Los roles de usuario y los estados de productos, pedidos y entregas están
 centralizados en `src/constants/index.js` como objetos congelados
@@ -795,13 +795,13 @@ código:
 - `PRIORITY`: `LOW`, `NORMAL`, `HIGH`
 - `DOCUMENT_TYPES`: `DNI`, `LICENSE`, `PROOF_OF_ADDRESS`, `DELIVERY_PROOF`, `OTHER`
 
-***REMOVED******REMOVED*** Carga de archivos (Multer)
+## Carga de archivos (Multer)
 
 ShipNow permite subir documentos y comprobantes vía `multipart/form-data`, guardarlos en el
 filesystem del servidor y asociarlos a una entidad existente (usuario o entrega). El archivo en sí
 **nunca** se guarda en MongoDB: solo se persisten sus metadatos.
 
-***REMOVED******REMOVED******REMOVED*** Configuración centralizada
+### Configuración centralizada
 
 Toda la configuración de Multer vive en `src/config/multer.config.js`, separada de los routers
 (igual que Swagger vive separado en `swagger.config.js`). Define:
@@ -815,23 +815,23 @@ Toda la configuración de Multer vive en `src/config/multer.config.js`, separada
   original (evita colisiones y problemas de path traversal).
 - **Tipos aceptados**: `application/pdf`, `image/jpeg`, `image/png`, `image/webp`.
 - **Tamaño máximo**: 5MB por archivo.
-- **Manejo de errores de carga**: ver [Validaciones del módulo de carga de archivos](***REMOVED***validaciones-del-módulo-de-carga-de-archivos).
+- **Manejo de errores de carga**: ver [Validaciones del módulo de carga de archivos](#validaciones-del-módulo-de-carga-de-archivos).
 
-***REMOVED******REMOVED******REMOVED*** Estructura de carpetas
+### Estructura de carpetas
 
 ```
 uploads/
 ├── .gitkeep
-├── users/            ***REMOVED*** Documentos de usuario (DNI, licencia, comprobante de domicilio, etc.)
+├── users/            # Documentos de usuario (DNI, licencia, comprobante de domicilio, etc.)
 │   └── .gitkeep
-└── deliveries/        ***REMOVED*** Comprobantes de entrega (foto, firma del cliente, etc.)
+└── deliveries/        # Comprobantes de entrega (foto, firma del cliente, etc.)
     └── .gitkeep
 ```
 
 `uploads/` está en `.gitignore` (mismo patrón que `logs/`): los archivos subidos nunca se suben al
 repositorio, solo la estructura de carpetas vacía (`.gitkeep`).
 
-***REMOVED******REMOVED******REMOVED*** Endpoints
+### Endpoints
 
 **`POST /api/users/:uid/documents`** — campo de archivo `file` (obligatorio) + campo
 `documentType` (obligatorio, uno de `DOCUMENT_TYPES`). Verifica que el usuario exista, valida el
@@ -880,7 +880,7 @@ Ambos endpoints están documentados como `multipart/form-data` en Swagger (`/api
 `Uploads`), con el nombre del campo de archivo, los campos adicionales, los tipos de documento
 permitidos y todos los errores posibles con ejemplo.
 
-***REMOVED******REMOVED*** Mocking y carga de datos de prueba
+## Mocking y carga de datos de prueba
 
 El módulo de mocking permite generar usuarios (incluidos repartidores),
 pedidos y entregas simulados, sin necesidad de cargarlos a mano, para
@@ -891,16 +891,16 @@ por capas que el resto del proyecto:
 
 ```
 src/
-├── utils/mock.generator.js     ***REMOVED*** Genera los datos falsos (nombres, emails,
+├── utils/mock.generator.js     # Genera los datos falsos (nombres, emails,
 │                                  direcciones, items, etc). No conoce
 │                                  Express ni Mongoose. Usa ROLES,
 │                                  ORDER_STATUS, DELIVERY_STATUS y PRIORITY
 │                                  de constants/index.js: no hay strings
 │                                  sueltos ni valores escritos a mano.
-├── services/mock.service.js    ***REMOVED*** Orquesta la generación y decide qué se
+├── services/mock.service.js    # Orquesta la generación y decide qué se
 │                                  guarda y qué no.
-├── controllers/mock.controller.js  ***REMOVED*** Capa HTTP: lee req, llama al service.
-└── routes/mocks.routes.js      ***REMOVED*** Router montado en /api/mocks.
+├── controllers/mock.controller.js  # Capa HTTP: lee req, llama al service.
+└── routes/mocks.routes.js      # Router montado en /api/mocks.
 ```
 
 `mock.service.js` no reinventa las reglas de negocio: para insertar datos
@@ -912,7 +912,7 @@ pedido `created` y un usuario con rol `driver`, etc. Los repositorios
 (`userRepository`, `orderRepository`) solo se usan para **leer** usuarios o
 pedidos existentes y elegir con cuáles relacionar los nuevos datos.
 
-***REMOVED******REMOVED******REMOVED*** 1. Generar datos simulados sin guardarlos (preview)
+### 1. Generar datos simulados sin guardarlos (preview)
 
 Estos endpoints solo devuelven JSON en la respuesta; no escriben nada en
 MongoDB. Sirven para inspeccionar rápidamente la forma de los datos o para
@@ -928,16 +928,16 @@ alimentar un frontend/mock sin depender de una base levantada.
 Ejemplos:
 
 ```bash
-***REMOVED*** 5 usuarios simulados, cualquier rol
+# 5 usuarios simulados, cualquier rol
 curl "http://localhost:3000/api/mocks/users?count=5"
 
-***REMOVED*** 3 repartidores simulados
+# 3 repartidores simulados
 curl "http://localhost:3000/api/mocks/users?count=3&role=driver"
 
-***REMOVED*** 10 pedidos simulados
+# 10 pedidos simulados
 curl "http://localhost:3000/api/mocks/orders?count=10"
 
-***REMOVED*** Dataset chico y coherente para revisar relaciones de un vistazo
+# Dataset chico y coherente para revisar relaciones de un vistazo
 curl "http://localhost:3000/api/mocks/full?users=4&orders=3&deliveries=2"
 ```
 
@@ -953,7 +953,7 @@ Notas sobre el preview:
 - La respuesta siempre incluye `"persisted": false` para dejar explícito
   que nada se guardó.
 
-***REMOVED******REMOVED******REMOVED*** 2. Insertar datos de prueba reales en MongoDB (seed)
+### 2. Insertar datos de prueba reales en MongoDB (seed)
 
 ```
 POST /api/mocks/generate
@@ -1000,7 +1000,7 @@ Qué hace, en orden:
 > **Nota:** el seeding sigue usando `UserRepository`/`OrderRepository`
 > directamente (no `/api/users` ni `/api/orders` vía HTTP) para leer "todos
 > los customers disponibles" y elegir con qué relacionar los datos nuevos:
-> esa lectura interna **no está paginada** (ver [Performance](***REMOVED***performance)),
+> esa lectura interna **no está paginada** (ver [Performance](#performance)),
 > a diferencia de lo que devuelve `GET /api/users` o `GET /api/orders` cuando
 > se los llama directamente por HTTP.
 
@@ -1026,14 +1026,14 @@ La respuesta (`201`) incluye un resumen y los documentos creados:
 Cómo probar rápido que las relaciones quedaron bien armadas:
 
 ```bash
-***REMOVED*** 1. Sembrar datos
+# 1. Sembrar datos
 curl -X POST http://localhost:3000/api/mocks/generate \
   -H "Content-Type: application/json" -d '{"users": 8, "orders": 6, "deliveries": 4}'
 
-***REMOVED*** 2. Verificar en los endpoints normales de la API
-curl http://localhost:3000/api/users        ***REMOVED*** respuesta paginada: leer .data
-curl http://localhost:3000/api/orders       ***REMOVED*** cada pedido trae el customer populado
-curl http://localhost:3000/api/deliveries   ***REMOVED*** cada entrega trae order y driver populados
+# 2. Verificar en los endpoints normales de la API
+curl http://localhost:3000/api/users        # respuesta paginada: leer .data
+curl http://localhost:3000/api/orders       # cada pedido trae el customer populado
+curl http://localhost:3000/api/deliveries   # cada entrega trae order y driver populados
 ```
 
 Este endpoint es **aditivo**: no borra datos existentes, solo agrega. Para
@@ -1041,9 +1041,9 @@ limpiar la base de prueba entre corridas, hacerlo manualmente (por ejemplo
 `mongosh` contra la base de desarrollo) — el módulo de mocking
 deliberadamente no expone un endpoint de borrado masivo.
 
-***REMOVED******REMOVED*** Testing funcional (Mocha, Chai y Supertest)
+## Testing funcional (Mocha, Chai y Supertest)
 
-***REMOVED******REMOVED******REMOVED*** Herramientas
+### Herramientas
 
 | Herramienta | Rol |
 |---|---|
@@ -1055,7 +1055,7 @@ Los tests importan `src/app.js` directamente (no `src/server.js`): como la
 app de Express está separada del `app.listen(...)`, Supertest le hace
 peticiones en memoria sin levantar ningún servidor.
 
-***REMOVED******REMOVED******REMOVED*** Entorno de testing separado del de desarrollo
+### Entorno de testing separado del de desarrollo
 
 La suite usa su **propio archivo de variables de entorno** (`.env.test`,
 nunca `.env`) y su **propia base de datos MongoDB**, distinta a la de
@@ -1084,7 +1084,7 @@ descriptivo si `MONGODB_URI` no está configurada o no "parece" de testing
 — para evitar por accidente correr la limpieza automática (ver más abajo)
 contra la base de desarrollo.
 
-***REMOVED******REMOVED******REMOVED*** Cómo ejecutar los tests
+### Cómo ejecutar los tests
 
 ```bash
 npm test
@@ -1101,7 +1101,7 @@ La configuración de Mocha vive en `.mocharc.json` (patrón de specs,
 timeout, y la carga de `test/setup.js` vía `require` antes de cualquier
 archivo de test).
 
-***REMOVED******REMOVED******REMOVED*** Qué módulos están cubiertos
+### Qué módulos están cubiertos
 
 | Archivo | Endpoints cubiertos |
 |---|---|
@@ -1121,7 +1121,7 @@ nunca solo "que responda" o "que falle". El caso de `GET /api/orders/:oid`
 con un pedido inexistente, por ejemplo, corrobora el mismo `404` y el mismo
 `ORDER_NOT_FOUND` que documenta `src/docs/orders.docs.js` en Swagger.
 
-***REMOVED******REMOVED******REMOVED*** Datos de prueba y limpieza
+### Datos de prueba y limpieza
 
 - Los datos que cada test necesita (un usuario, un pedido) se crean **en
   el propio test**, llamando a la API real a través de los helpers de
@@ -1134,7 +1134,7 @@ con un pedido inexistente, por ejemplo, corrobora el mismo `404` y el mismo
   dependa de datos dejados por otro ni del orden en que Mocha decida
   correrlos — cada test parte siempre de una base vacía.
 
-***REMOVED******REMOVED******REMOVED*** ¿Se necesita una base de datos de testing?
+### ¿Se necesita una base de datos de testing?
 
 Sí. A diferencia de un mock en memoria, estos tests validan el flujo real
 completo (`Router → Controller → Service → Repository → Mongoose`),
@@ -1143,10 +1143,10 @@ INVALID_ID`, índice único de `email` → `409 DUPLICATE_EMAIL`, etc.), así
 que necesitan una instancia real de MongoDB — la misma que ya usás para
 desarrollo, apuntando a una base distinta.
 
-***REMOVED******REMOVED******REMOVED*** Variables de entorno necesarias para testing
+### Variables de entorno necesarias para testing
 
 | Variable | Descripción |
 |---|---|
 | `PORT` | Exigida por `env.config.js` al arrancar, aunque los tests no levantan servidor |
 | `MONGODB_URI` | Cadena de conexión a la base de **testing** (distinta a la de desarrollo) |
-| `NODE_ENV` | Debe ser `test` — baja el nivel de logs a `warning` (ver [Sistema de logging](***REMOVED***sistema-de-logging)) |
+| `NODE_ENV` | Debe ser `test` — baja el nivel de logs a `warning` (ver [Sistema de logging](#sistema-de-logging)) |

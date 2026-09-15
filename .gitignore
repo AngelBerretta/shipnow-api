@@ -1,21 +1,21 @@
-***REMOVED*** Dependencias
+# Dependencias
 node_modules/
 
-***REMOVED*** Variables de entorno
+# Variables de entorno
 .env
 .env.local
 .env.test
 .env.production
 
-***REMOVED*** Logs
+# Logs
 npm-debug.log*
 logs/*
 !logs/.gitkeep
 *.log
 
-***REMOVED*** Archivos subidos por los usuarios (Multer). Solo se versiona la
-***REMOVED*** estructura de carpetas (.gitkeep); los archivos reales nunca van al
-***REMOVED*** repo. En la base solo se guardan los metadatos (ver fileMetadata.schema.js).
+# Archivos subidos por los usuarios (Multer). Solo se versiona la
+# estructura de carpetas (.gitkeep); los archivos reales nunca van al
+# repo. En la base solo se guardan los metadatos (ver fileMetadata.schema.js).
 uploads/*
 !uploads/.gitkeep
 !uploads/users/
@@ -25,10 +25,10 @@ uploads/users/*
 uploads/deliveries/*
 !uploads/deliveries/.gitkeep
 
-***REMOVED*** Sistema
+# Sistema
 .DS_Store
 
-***REMOVED*** Editor
+# Editor
 .vscode/
 .idea/
 

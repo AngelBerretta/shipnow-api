@@ -21,13 +21,13 @@
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '***REMOVED***/components/schemas/Delivery'
+ *                 $ref: '#/components/schemas/Delivery'
  *       500:
  *         description: Error interno del servidor.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *
  *   post:
  *     tags: [Deliveries]
@@ -41,20 +41,20 @@
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '***REMOVED***/components/schemas/DeliveryInput'
+ *             $ref: '#/components/schemas/DeliveryInput'
  *     responses:
  *       201:
  *         description: Entrega creada.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/Delivery'
+ *               $ref: '#/components/schemas/Delivery'
  *       400:
  *         description: Faltan datos obligatorios, o el usuario indicado no tiene rol `driver`.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             examples:
  *               sinDriver:
  *                 summary: Falta el repartidor
@@ -71,7 +71,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             examples:
  *               pedidoInexistente:
  *                 summary: Pedido inexistente
@@ -88,7 +88,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               success: false
  *               error:
@@ -101,26 +101,26 @@
  *     tags: [Deliveries]
  *     summary: Obtener entrega por ID
  *     parameters:
- *       - $ref: '***REMOVED***/components/parameters/DeliveryId'
+ *       - $ref: '#/components/parameters/DeliveryId'
  *     responses:
  *       200:
  *         description: Entrega encontrada.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/Delivery'
+ *               $ref: '#/components/schemas/Delivery'
  *       400:
  *         description: El `did` no tiene formato de ObjectId válido.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
  *         description: No existe una entrega con ese ID.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               success: false
  *               error: { code: DELIVERY_NOT_FOUND, message: Entrega no encontrada }
@@ -129,14 +129,14 @@
  *     tags: [Deliveries]
  *     summary: Eliminar entrega
  *     parameters:
- *       - $ref: '***REMOVED***/components/parameters/DeliveryId'
+ *       - $ref: '#/components/parameters/DeliveryId'
  *     responses:
  *       200:
  *         description: Entrega eliminada.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/SuccessResponse'
+ *               $ref: '#/components/schemas/SuccessResponse'
  *             example:
  *               message: Entrega eliminada
  *       400:
@@ -144,13 +144,13 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
  *         description: No existe una entrega con ese ID.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               success: false
  *               error: { code: DELIVERY_NOT_FOUND, message: Entrega no encontrada }
@@ -164,26 +164,26 @@
  *       `deliveredAt` y el pedido asociado pasa automáticamente a estado
  *       `delivered`.
  *     parameters:
- *       - $ref: '***REMOVED***/components/parameters/DeliveryId'
+ *       - $ref: '#/components/parameters/DeliveryId'
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '***REMOVED***/components/schemas/DeliveryStatusUpdate'
+ *             $ref: '#/components/schemas/DeliveryStatusUpdate'
  *     responses:
  *       200:
  *         description: Entrega actualizada.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/Delivery'
+ *               $ref: '#/components/schemas/Delivery'
  *       400:
  *         description: Falta el `status` o no pertenece al enum de estados válidos.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             examples:
  *               sinStatus:
  *                 summary: Falta el status
@@ -203,7 +203,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               success: false
  *               error: { code: DELIVERY_NOT_FOUND, message: Entrega no encontrada }
@@ -212,7 +212,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               success: false
  *               error: { code: DELIVERY_ALREADY_COMPLETED, message: La entrega ya fue completada }

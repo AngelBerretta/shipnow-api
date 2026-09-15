@@ -25,7 +25,7 @@
  *         in: query
  *         required: false
  *         schema:
- *           $ref: '***REMOVED***/components/schemas/ProductStatus'
+ *           $ref: '#/components/schemas/ProductStatus'
  *     responses:
  *       200:
  *         description: Listado de productos.
@@ -34,7 +34,7 @@
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '***REMOVED***/components/schemas/Product'
+ *                 $ref: '#/components/schemas/Product'
  *
  *   post:
  *     tags: [Products]
@@ -47,20 +47,20 @@
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '***REMOVED***/components/schemas/ProductInput'
+ *             $ref: '#/components/schemas/ProductInput'
  *     responses:
  *       201:
  *         description: Producto creado.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/Product'
+ *               $ref: '#/components/schemas/Product'
  *       400:
  *         description: Faltan datos obligatorios, o `price`/`stock` son negativos.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             examples:
  *               camposFaltantes:
  *                 summary: Faltan campos obligatorios
@@ -78,26 +78,26 @@
  *     tags: [Products]
  *     summary: Obtener producto por ID
  *     parameters:
- *       - $ref: '***REMOVED***/components/parameters/ProductId'
+ *       - $ref: '#/components/parameters/ProductId'
  *     responses:
  *       200:
  *         description: Producto encontrado.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/Product'
+ *               $ref: '#/components/schemas/Product'
  *       400:
  *         description: El `pid` no tiene formato de ObjectId válido.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
  *         description: No existe un producto con ese ID.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               success: false
  *               error: { code: PRODUCT_NOT_FOUND, message: Producto no encontrado }
@@ -110,32 +110,32 @@
  *       envía `stock`, `status` se recalcula automáticamente (mismo criterio
  *       que en la creación).
  *     parameters:
- *       - $ref: '***REMOVED***/components/parameters/ProductId'
+ *       - $ref: '#/components/parameters/ProductId'
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '***REMOVED***/components/schemas/ProductInput'
+ *             $ref: '#/components/schemas/ProductInput'
  *     responses:
  *       200:
  *         description: Producto actualizado.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/Product'
+ *               $ref: '#/components/schemas/Product'
  *       400:
  *         description: '`price`/`stock` son negativos.'
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
  *         description: No existe un producto con ese ID.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               success: false
  *               error: { code: PRODUCT_NOT_FOUND, message: Producto no encontrado }
@@ -144,14 +144,14 @@
  *     tags: [Products]
  *     summary: Eliminar producto
  *     parameters:
- *       - $ref: '***REMOVED***/components/parameters/ProductId'
+ *       - $ref: '#/components/parameters/ProductId'
  *     responses:
  *       200:
  *         description: Producto eliminado.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/SuccessResponse'
+ *               $ref: '#/components/schemas/SuccessResponse'
  *             example:
  *               message: Producto eliminado
  *       404:
@@ -159,7 +159,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               success: false
  *               error: { code: PRODUCT_NOT_FOUND, message: Producto no encontrado }

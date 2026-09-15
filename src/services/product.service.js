@@ -48,7 +48,7 @@ class ProductService {
       price,
       stock,
       category,
-      status: this.***REMOVED***resolveStatus(stock, status),
+      status: this.#resolveStatus(stock, status),
     });
   }
 
@@ -73,7 +73,7 @@ class ProductService {
 
     if (stock !== undefined) {
       updateData.stock = stock;
-      updateData.status = this.***REMOVED***resolveStatus(stock, status);
+      updateData.status = this.#resolveStatus(stock, status);
     } else if (status !== undefined && product.stock > 0) {
       updateData.status = status;
     }
@@ -93,7 +93,7 @@ class ProductService {
    * Regla de negocio: un producto sin stock nunca puede figurar como
    * disponible, sin importar el status recibido en el body.
    */
-  ***REMOVED***resolveStatus(stock, requestedStatus) {
+  #resolveStatus(stock, requestedStatus) {
     if (stock <= 0) return PRODUCT_STATUS.OUT_OF_STOCK;
     return requestedStatus || PRODUCT_STATUS.AVAILABLE;
   }

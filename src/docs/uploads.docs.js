@@ -26,7 +26,7 @@
  *       **Límites:** máximo 5MB por archivo. Tipos permitidos:
  *       `application/pdf`, `image/jpeg`, `image/png`, `image/webp`.
  *     parameters:
- *       - $ref: '***REMOVED***/components/parameters/UserId'
+ *       - $ref: '#/components/parameters/UserId'
  *     requestBody:
  *       required: true
  *       content:
@@ -41,7 +41,7 @@
  *                 description: Archivo a cargar (campo obligatorio, debe llamarse exactamente `file`).
  *               documentType:
  *                 allOf:
- *                   - $ref: '***REMOVED***/components/schemas/DocumentType'
+ *                   - $ref: '#/components/schemas/DocumentType'
  *                 description: Tipo de documento. Obligatorio en este endpoint.
  *           encoding:
  *             file:
@@ -52,7 +52,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/UserDocumentUploadResponse'
+ *               $ref: '#/components/schemas/UserDocumentUploadResponse'
  *       400:
  *         description: >
  *           Falta el archivo, falta o es inválido `documentType`, el tipo de
@@ -60,7 +60,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             examples:
  *               archivoFaltante:
  *                 summary: No se envió ningún archivo
@@ -106,7 +106,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               success: false
  *               error: { code: USER_NOT_FOUND, message: Usuario no encontrado }
@@ -125,7 +125,7 @@
  *       **Límites:** máximo 5MB por archivo. Tipos permitidos:
  *       `application/pdf`, `image/jpeg`, `image/png`, `image/webp`.
  *     parameters:
- *       - $ref: '***REMOVED***/components/parameters/DeliveryId'
+ *       - $ref: '#/components/parameters/DeliveryId'
  *     requestBody:
  *       required: true
  *       content:
@@ -140,7 +140,7 @@
  *                 description: Archivo a cargar (campo obligatorio, debe llamarse exactamente `file`).
  *               documentType:
  *                 allOf:
- *                   - $ref: '***REMOVED***/components/schemas/DocumentType'
+ *                   - $ref: '#/components/schemas/DocumentType'
  *                 description: >
  *                   Opcional. Si no se envía, se guarda como
  *                   `comprobante_entrega`. Si se envía, debe pertenecer al enum.
@@ -153,7 +153,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/DeliveryProofUploadResponse'
+ *               $ref: '#/components/schemas/DeliveryProofUploadResponse'
  *       400:
  *         description: >
  *           Falta el archivo, `documentType` es inválido, el tipo de archivo
@@ -161,7 +161,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             examples:
  *               archivoFaltante:
  *                 summary: No se envió ningún archivo
@@ -181,7 +181,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               success: false
  *               error: { code: DELIVERY_NOT_FOUND, message: Entrega no encontrada }

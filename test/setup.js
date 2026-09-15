@@ -32,7 +32,7 @@ if (!process.env.MONGODB_URI || !process.env.MONGODB_URI.includes('test')) {
 }
 
 /**
- * Root Hook Plugin de Mocha (https://mochajs.org/***REMOVED***root-hook-plugins).
+ * Root Hook Plugin de Mocha (https://mochajs.org/#root-hook-plugins).
  * Al exportarse desde un archivo cargado via "require", se aplica
  * automaticamente a TODA la suite: ningun archivo de test necesita
  * conectar o limpiar la base por su cuenta.

@@ -19,13 +19,13 @@
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '***REMOVED***/components/schemas/User'
+ *                 $ref: '#/components/schemas/User'
  *       500:
  *         description: Error interno del servidor.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               success: false
  *               error: { code: INTERNAL_ERROR, message: Error interno del servidor }
@@ -41,20 +41,20 @@
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '***REMOVED***/components/schemas/UserInput'
+ *             $ref: '#/components/schemas/UserInput'
  *     responses:
  *       201:
  *         description: Usuario creado.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/User'
+ *               $ref: '#/components/schemas/User'
  *       400:
  *         description: Datos inválidos (faltan campos obligatorios o el rol enviado no existe).
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             examples:
  *               camposFaltantes:
  *                 summary: Faltan campos obligatorios
@@ -76,7 +76,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               success: false
  *               error: { code: FORBIDDEN_ACTION, message: No puedes crear un usuario con rol admin }
@@ -85,7 +85,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               success: false
  *               error:
@@ -98,20 +98,20 @@
  *     tags: [Users]
  *     summary: Obtener usuario por ID
  *     parameters:
- *       - $ref: '***REMOVED***/components/parameters/UserId'
+ *       - $ref: '#/components/parameters/UserId'
  *     responses:
  *       200:
  *         description: Usuario encontrado.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/User'
+ *               $ref: '#/components/schemas/User'
  *       400:
  *         description: El `uid` no tiene formato de ObjectId válido.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               success: false
  *               error: { code: INVALID_ID, message: 'El identificador "123" no tiene un formato valido' }
@@ -120,7 +120,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               success: false
  *               error: { code: USER_NOT_FOUND, message: Usuario no encontrado }
@@ -129,14 +129,14 @@
  *     tags: [Users]
  *     summary: Eliminar usuario
  *     parameters:
- *       - $ref: '***REMOVED***/components/parameters/UserId'
+ *       - $ref: '#/components/parameters/UserId'
  *     responses:
  *       200:
  *         description: Usuario eliminado.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/SuccessResponse'
+ *               $ref: '#/components/schemas/SuccessResponse'
  *             example:
  *               message: Usuario eliminado
  *       400:
@@ -144,7 +144,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               success: false
  *               error: { code: INVALID_ID, message: 'El identificador "123" no tiene un formato valido' }
@@ -153,7 +153,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '***REMOVED***/components/schemas/ErrorResponse'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               success: false
  *               error: { code: USER_NOT_FOUND, message: Usuario no encontrado }

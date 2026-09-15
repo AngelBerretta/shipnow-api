@@ -69,7 +69,7 @@ class OrderService {
       throw new ForbiddenActionError('Los repartidores no pueden crear pedidos');
     }
 
-    const total = this.***REMOVED***calculateTotal(items);
+    const total = this.#calculateTotal(items);
 
     const newOrder = await orderRepository.create({
       customer,
@@ -82,9 +82,9 @@ class OrderService {
 
     logger.info(`Pedido ${newOrder._id} creado correctamente (cliente: ${customer}, total: $${total})`);
 
-    this.***REMOVED***sendOrderConfirmationEmail(customer, newOrder._id, total);
+    this.#sendOrderConfirmationEmail(customer, newOrder._id, total);
 
-    const shippingCost = this.***REMOVED***calculateShippingCost(newOrder.items);
+    const shippingCost = this.#calculateShippingCost(newOrder.items);
 
     return { order: newOrder, shippingCost };
   }
@@ -118,15 +118,15 @@ class OrderService {
     return deleted;
   }
 
-  ***REMOVED***calculateTotal(items) {
+  #calculateTotal(items) {
     return items.reduce((acc, item) => acc + item.price * item.quantity, 0);
   }
 
-  ***REMOVED***calculateShippingCost(items) {
+  #calculateShippingCost(items) {
     return items.reduce((acc, item) => acc + item.quantity * SHIPPING_COST_PER_UNIT, 0);
   }
 
-  ***REMOVED***sendOrderConfirmationEmail(customerId, orderId, total) {
+  #sendOrderConfirmationEmail(customerId, orderId, total) {
     // Simulacion de envio de email (se reemplazaria por un EmailService real
     // apuntando a config.emailServiceUrl, ver src/config/env.config.js).
     logger.debug(`[EMAIL SIMULADO] Enviando confirmacion al usuario ${customerId}...`);

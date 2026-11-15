@@ -11,6 +11,7 @@ import {
   UserNotFoundError,
   DeliveryNotFoundError,
 } from '../errors/index.js';
+import { assertAllowed, canModifyDelivery } from '../policies/access.policy.js';
 
 /**
  * Arma el subdocumento de metadatos a partir del objeto `file` que
@@ -78,7 +79,7 @@ class UploadService {
    * `DOCUMENT_TYPES.DELIVERY_PROOF`. Si se envia, igual debe pertenecer
    * al enum.
    */
-  async uploadDeliveryProof(deliveryId, file, documentType) {
+async uploadDeliveryProof(deliveryId, file, documentType, actor) {
     if (!file) {
       throw new FileRequiredError('El archivo es obligatorio (campo "file")');
     }
@@ -94,7 +95,7 @@ class UploadService {
       if (!delivery) {
         throw new DeliveryNotFoundError();
       }
-
+      assertAllowed(!actor || canModifyDelivery(actor, delivery), 'Solo podes subir comprobantes de tus propias entregas');      
       const metadata = buildFileMetadata(file, resolvedType);
       const updatedDelivery = await deliveryRepository.addDocument(deliveryId, metadata);
 

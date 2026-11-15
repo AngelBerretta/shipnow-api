@@ -26,7 +26,8 @@ export async function uploadDeliveryProof(req, res, next) {
     const updatedDelivery = await uploadService.uploadDeliveryProof(
       req.params.did,
       req.file,
-      req.body.documentType
+      req.body.documentType,
+      req.user
     );
     res.status(201).json({
       message: 'Comprobante asociado a la entrega correctamente',

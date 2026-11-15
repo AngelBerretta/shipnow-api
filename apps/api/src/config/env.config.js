@@ -5,15 +5,11 @@ dotenv.config();
 /**
  * Variables de entorno criticas sin las cuales la aplicacion no puede
  * arrancar de forma segura. Son las UNICAS que detienen el arranque si
- * faltan.
- *
- * JWT_SECRET no esta en esta lista porque esta version de la API todavia
- * no implementa autenticacion (ver swagger.config.js: "esta version de
- * la API no implementa autenticacion ni autorizacion por token"). El dia
- * que se agregue login/JWT (Etapa 1 del roadmap), JWT_SECRET debe sumarse
- * aca.
+ * faltan. JWT_SECRET es obligatoria desde la Etapa 1 (autenticacion).
  */
-const REQUIRED_ENV_VARS = ['PORT', 'MONGODB_URI', 'NODE_ENV'];
+const REQUIRED_ENV_VARS = ['PORT', 'MONGODB_URI', 'NODE_ENV', 'JWT_SECRET'];
+
+const MIN_JWT_SECRET_LENGTH = 32;
 
 const VALID_NODE_ENVS = ['development', 'production', 'test'];
 
@@ -55,6 +51,13 @@ function validateEnv() {
     throw new Error(`[config] PORT="${process.env.PORT}" no es un numero de puerto valido.`);
   }
 
+  if (process.env.JWT_SECRET.trim().length < MIN_JWT_SECRET_LENGTH) {
+    throw new Error(
+      `[config] JWT_SECRET debe tener al menos ${MIN_JWT_SECRET_LENGTH} caracteres. ` +
+        `Generá uno con: node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`
+    );
+  }  
+
   const rawRounds = process.env.BCRYPT_ROUNDS;
   if (rawRounds !== undefined && rawRounds.trim() !== '') {
     const rounds = Number(rawRounds);
@@ -74,6 +77,16 @@ function resolveBcryptRounds() {
     return Number(rawRounds);
   }
   return process.env.NODE_ENV === 'test' ? TEST_BCRYPT_ROUNDS : DEFAULT_BCRYPT_ROUNDS;
+}
+
+function readPositiveInt(name, fallback) {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === '') return fallback;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(`[config] ${name}="${raw}" no es valido. Debe ser un entero positivo.`);
+  }
+  return value;
 }
 
 /**
@@ -99,8 +112,19 @@ const config = Object.freeze({
   // Costo (rounds) de bcrypt para hashear contraseñas (ver utils/password.js).
   bcryptRounds: resolveBcryptRounds(),
 
-  // Reservado para cuando se agregue autenticación con JWT.
-  jwtSecret: process.env.JWT_SECRET || null,
+  // Autenticacion (Etapa 1).
+  jwtSecret: process.env.JWT_SECRET,
+  auth: Object.freeze({
+    accessTokenTtlSeconds: readPositiveInt('ACCESS_TOKEN_TTL_MINUTES', 15) * 60,
+    refreshTokenTtlDays: readPositiveInt('REFRESH_TOKEN_TTL_DAYS', 7),
+    rateLimitWindowMinutes: 15,
+    // En tests el limite se sube para no interferir con la suite.
+    rateLimitMax: readPositiveInt('AUTH_RATE_LIMIT_MAX', process.env.NODE_ENV === 'test' ? 10000 : 20),
+  }),
+
+  // Cantidad de proxies delante de la API (Render = 1). Necesario para que
+  // el rate limit vea la IP real del cliente y no la del proxy.
+  trustProxy: Number(process.env.TRUST_PROXY || 0),
 
   // Origen(es) permitido(s) por CORS. "*" (todos) por default, pensado
   // para desarrollo; en producción se espera un dominio explícito.

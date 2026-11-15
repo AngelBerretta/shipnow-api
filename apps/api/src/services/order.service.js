@@ -24,6 +24,7 @@ import {
   OrderAlreadyDeliveredError,
   OrderHasActiveDeliveryError,
 } from '../errors/index.js';
+import { assertAllowed, canAccessOrder } from '../policies/access.policy.js';
 
 const SHIPPING_COST_PER_UNIT = 10;
 const MAX_TRACKING_CODE_ATTEMPTS = 5;
@@ -34,7 +35,7 @@ class OrderService {
    * sin control (ver utils/pagination.js). Admite filtrar por `status`,
    * `customer` y `store` (?status=created&customer=<id>&store=<id>).
    */
-  async getAllOrders(query = {}) {
+  async getAllOrders(query = {}, actor) {
     const pagination = parsePagination(query);
     const filter = {};
 
@@ -51,6 +52,9 @@ class OrderService {
       filter.store = query.store;
     }
 
+    // El alcance por rol se aplica ULTIMO: pisa cualquier filtro del query.
+    Object.assign(filter, await this.#scopeFilterFor(actor));
+
     const [orders, total] = await Promise.all([
       orderRepository.findAll(filter, { skip: pagination.skip, limit: pagination.limit }),
       orderRepository.countAll(filter),
@@ -59,20 +63,26 @@ class OrderService {
     return { data: orders, pagination: buildPaginationMeta(pagination, total) };
   }
 
-  async getOrderById(id) {
+  async getOrderById(id, actor) {
     const order = await orderRepository.findById(id);
     if (!order) {
       throw new OrderNotFoundError();
     }
+    assertAllowed(!actor || canAccessOrder(actor, order));
     return order;
   }
 
   /** Historial (linea de tiempo) de un pedido. */
-  async getOrderEvents(id) {
+  async getOrderEvents(id, actor) {
+    if (actor) {
+      await this.getOrderById(id, actor); // 404 o 403 antes de exponer el historial
+    }
     return orderEventService.getTimeline(id);
   }
 
-  async createOrder({ customer, store, items, deliveryAddress, priority }) {
+  async createOrder(input, actor) {
+    const { items, deliveryAddress, priority } = input;
+    const { customer, store } = this.#resolveCreationParties(input, actor);
     if (!customer) {
       throw new ValidationError('Falta el cliente');
     }
@@ -318,6 +328,41 @@ class OrderService {
     logger.debug(`[EMAIL SIMULADO] Enviando confirmacion al usuario ${customerId}...`);
     logger.debug(`[EMAIL SIMULADO] Tu pedido ${orderId} fue creado. Total: $${total}`);
   }
+
+  /** Filtro de Mongo con lo que cada rol puede ver. Sin actor (llamada interna) no se acota. */
+  async #scopeFilterFor(actor) {
+    if (!actor || actor.role === ROLES.ADMIN) return {};
+    if (actor.role === ROLES.CUSTOMER) return { customer: actor._id };
+    if (actor.role === ROLES.STORE) return { store: actor._id };
+    if (actor.role === ROLES.DRIVER) {
+      return { _id: { $in: await deliveryRepository.findOrderIdsByDriver(actor._id) } };
+    }
+    throw new ForbiddenActionError();
+  }
+
+  /**
+   * Un customer solo crea pedidos a su nombre y una tienda solo de su tienda:
+   * se fuerzan al id del actor, y si el body trae otro distinto, 403.
+   */
+  #resolveCreationParties({ customer, store }, actor) {
+    if (!actor || actor.role === ROLES.ADMIN) return { customer, store };
+    const me = String(actor._id);
+
+    if (actor.role === ROLES.CUSTOMER) {
+      if (customer && String(customer) !== me) {
+        throw new ForbiddenActionError('Solo podes crear pedidos a tu nombre');
+      }
+      return { customer: me, store };
+    }
+    if (actor.role === ROLES.STORE) {
+      if (store && String(store) !== me) {
+        throw new ForbiddenActionError('Solo podes crear pedidos de tu tienda');
+      }
+      return { customer, store: me };
+    }
+    throw new ForbiddenActionError();
+  }
+
 }
 
 export default new OrderService();

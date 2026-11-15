@@ -1,6 +1,5 @@
 import { expect } from 'chai';
-import request from 'supertest';
-import app from '../src/app.js';
+import { asAdmin } from './helpers/auth.js';
 import { ORDER_STATUS, TRACKING_CODE } from '../src/constants/index.js';
 import {
   createCustomer,
@@ -20,7 +19,7 @@ describe('Pedidos (/api/orders)', () => {
       const customer = await createCustomer();
       const order = await createOrder(customer._id);
 
-      const response = await request(app).get('/api/orders');
+      const response = await asAdmin().get('/api/orders');
 
       expect(response.status).to.equal(200);
       expect(response.body).to.have.property('data').that.is.an('array');
@@ -35,7 +34,7 @@ describe('Pedidos (/api/orders)', () => {
       const customer = await createCustomer();
       await createOrder(customer._id);
 
-      const response = await request(app).get(`/api/orders?status=${ORDER_STATUS.CREATED}`);
+      const response = await asAdmin().get(`/api/orders?status=${ORDER_STATUS.CREATED}`);
 
       expect(response.status).to.equal(200);
       response.body.data.forEach((order) => expect(order.status).to.equal(ORDER_STATUS.CREATED));
@@ -47,7 +46,7 @@ describe('Pedidos (/api/orders)', () => {
       const ownOrder = await createOrder(customer._id, { store: store._id });
       await createOrder(customer._id);
 
-      const response = await request(app).get(`/api/orders?store=${store._id}`);
+      const response = await asAdmin().get(`/api/orders?store=${store._id}`);
 
       expect(response.status).to.equal(200);
       expect(response.body.data).to.have.lengthOf(1);
@@ -55,7 +54,7 @@ describe('Pedidos (/api/orders)', () => {
     });
 
     it('devuelve 400 INVALID_STATUS si el status de filtro no pertenece al enum', async () => {
-      const response = await request(app).get('/api/orders?status=inexistente');
+      const response = await asAdmin().get('/api/orders?status=inexistente');
 
       expect(response.status).to.equal(400);
       expect(response.body.error.code).to.equal('INVALID_STATUS');
@@ -69,7 +68,7 @@ describe('Pedidos (/api/orders)', () => {
         items: [{ name: 'Producto A', quantity: 2, price: 150 }],
       });
 
-      const response = await request(app).get(`/api/orders/${order._id}`);
+      const response = await asAdmin().get(`/api/orders/${order._id}`);
 
       expect(response.status).to.equal(200);
       expect(response.body._id).to.equal(order._id);
@@ -83,7 +82,7 @@ describe('Pedidos (/api/orders)', () => {
     });
 
     it('devuelve 404 con el formato de error definido si el pedido no existe', async () => {
-      const response = await request(app).get(`/api/orders/${NON_EXISTENT_ID}`);
+      const response = await asAdmin().get(`/api/orders/${NON_EXISTENT_ID}`);
 
       expect(response.status).to.equal(404);
       expect(response.body).to.deep.equal({
@@ -93,7 +92,7 @@ describe('Pedidos (/api/orders)', () => {
     });
 
     it('devuelve 400 si el id no tiene un formato valido', async () => {
-      const response = await request(app).get(`/api/orders/${MALFORMED_ID}`);
+      const response = await asAdmin().get(`/api/orders/${MALFORMED_ID}`);
 
       expect(response.status).to.equal(400);
       expect(response.body.error.code).to.equal('INVALID_ID');
@@ -110,7 +109,7 @@ describe('Pedidos (/api/orders)', () => {
         ],
       });
 
-      const response = await request(app).post('/api/orders').send(payload);
+      const response = await asAdmin().post('/api/orders').send(payload);
 
       expect(response.status).to.equal(201);
       expect(response.body.message).to.equal('Pedido creado y email enviado');
@@ -145,7 +144,7 @@ describe('Pedidos (/api/orders)', () => {
       const customer = await createCustomer();
       const notAStore = await createCustomer();
 
-      const response = await request(app)
+      const response = await asAdmin()
         .post('/api/orders')
         .send(buildOrderPayload(customer._id, { store: notAStore._id }));
 
@@ -156,7 +155,7 @@ describe('Pedidos (/api/orders)', () => {
     it('devuelve 404 USER_NOT_FOUND si la tienda indicada no existe', async () => {
       const customer = await createCustomer();
 
-      const response = await request(app)
+      const response = await asAdmin()
         .post('/api/orders')
         .send(buildOrderPayload(customer._id, { store: NON_EXISTENT_ID }));
 
@@ -167,7 +166,7 @@ describe('Pedidos (/api/orders)', () => {
     it('devuelve 400 VALIDATION_ERROR si faltan items', async () => {
       const customer = await createCustomer();
 
-      const response = await request(app)
+      const response = await asAdmin()
         .post('/api/orders')
         .send({ customer: customer._id, deliveryAddress: 'Calle Falsa 123' });
 
@@ -181,7 +180,7 @@ describe('Pedidos (/api/orders)', () => {
     it('devuelve 404 USER_NOT_FOUND si el cliente indicado no existe', async () => {
       const payload = buildOrderPayload(NON_EXISTENT_ID);
 
-      const response = await request(app).post('/api/orders').send(payload);
+      const response = await asAdmin().post('/api/orders').send(payload);
 
       expect(response.status).to.equal(404);
       expect(response.body.error.code).to.equal('USER_NOT_FOUND');
@@ -191,7 +190,7 @@ describe('Pedidos (/api/orders)', () => {
       const driver = await createDriver();
       const payload = buildOrderPayload(driver._id);
 
-      const response = await request(app).post('/api/orders').send(payload);
+      const response = await asAdmin().post('/api/orders').send(payload);
 
       expect(response.status).to.equal(403);
       expect(response.body.error.code).to.equal('FORBIDDEN_ACTION');
@@ -203,7 +202,7 @@ describe('Pedidos (/api/orders)', () => {
       const customer = await createCustomer();
       const order = await createOrder(customer._id);
 
-      const response = await request(app)
+      const response = await asAdmin()
         .patch(`/api/orders/${order._id}/status`)
         .send({ status: ORDER_STATUS.ASSIGNED });
 
@@ -216,7 +215,7 @@ describe('Pedidos (/api/orders)', () => {
       const customer = await createCustomer();
       const order = await createOrder(customer._id);
 
-      const response = await request(app)
+      const response = await asAdmin()
         .patch(`/api/orders/${order._id}/status`)
         .send({ status: ORDER_STATUS.CANCELLED });
 
@@ -228,7 +227,7 @@ describe('Pedidos (/api/orders)', () => {
       const customer = await createCustomer();
       const order = await createOrder(customer._id);
 
-      const response = await request(app).patch(`/api/orders/${order._id}/status`).send({});
+      const response = await asAdmin().patch(`/api/orders/${order._id}/status`).send({});
 
       expect(response.status).to.equal(400);
       expect(response.body.error.code).to.equal('VALIDATION_ERROR');
@@ -238,7 +237,7 @@ describe('Pedidos (/api/orders)', () => {
       const customer = await createCustomer();
       const order = await createOrder(customer._id);
 
-      const response = await request(app)
+      const response = await asAdmin()
         .patch(`/api/orders/${order._id}/status`)
         .send({ status: 'estado_inventado' });
 
@@ -251,7 +250,7 @@ describe('Pedidos (/api/orders)', () => {
     });
 
     it('devuelve 404 ORDER_NOT_FOUND si el pedido no existe', async () => {
-      const response = await request(app)
+      const response = await asAdmin()
         .patch(`/api/orders/${NON_EXISTENT_ID}/status`)
         .send({ status: ORDER_STATUS.ASSIGNED });
 
@@ -264,7 +263,7 @@ describe('Pedidos (/api/orders)', () => {
       const order = await createOrder(customer._id);
       await advanceOrder(order._id); // created -> assigned -> picked_up -> in_transit -> delivered
 
-      const response = await request(app)
+      const response = await asAdmin()
         .patch(`/api/orders/${order._id}/status`)
         .send({ status: ORDER_STATUS.CANCELLED });
 
@@ -277,7 +276,7 @@ describe('Pedidos (/api/orders)', () => {
         const customer = await createCustomer();
         const order = await createOrder(customer._id);
 
-        const response = await request(app)
+        const response = await asAdmin()
           .patch(`/api/orders/${order._id}/status`)
           .send({ status: ORDER_STATUS.DELIVERED });
 
@@ -289,7 +288,7 @@ describe('Pedidos (/api/orders)', () => {
           to: ORDER_STATUS.DELIVERED,
           allowed: [ORDER_STATUS.ASSIGNED, ORDER_STATUS.CANCELLED],
         });
-        const unchanged = await request(app).get(`/api/orders/${order._id}`);
+        const unchanged = await asAdmin().get(`/api/orders/${order._id}`);
         expect(unchanged.body.status).to.equal(ORDER_STATUS.CREATED);
       });
 
@@ -297,7 +296,7 @@ describe('Pedidos (/api/orders)', () => {
         const customer = await createCustomer();
         const order = await createOrder(customer._id);
 
-        const response = await request(app)
+        const response = await asAdmin()
           .patch(`/api/orders/${order._id}/status`)
           .send({ status: ORDER_STATUS.CREATED });
 
@@ -310,7 +309,7 @@ describe('Pedidos (/api/orders)', () => {
         const order = await createOrder(customer._id);
         await advanceOrder(order._id, ['assigned', 'picked_up']);
 
-        const response = await request(app)
+        const response = await asAdmin()
           .patch(`/api/orders/${order._id}/status`)
           .send({ status: ORDER_STATUS.ASSIGNED });
 
@@ -323,7 +322,7 @@ describe('Pedidos (/api/orders)', () => {
         const order = await createOrder(customer._id);
         await advanceOrder(order._id, ['cancelled']);
 
-        const response = await request(app)
+        const response = await asAdmin()
           .patch(`/api/orders/${order._id}/status`)
           .send({ status: ORDER_STATUS.CREATED });
 
@@ -335,7 +334,7 @@ describe('Pedidos (/api/orders)', () => {
       it('devuelve 409 ORDER_HAS_ACTIVE_DELIVERY al cancelar un pedido con entrega asociada', async () => {
         const delivery = await createDelivery();
 
-        const response = await request(app)
+        const response = await asAdmin()
           .patch(`/api/orders/${delivery.order}/status`)
           .send({ status: ORDER_STATUS.CANCELLED });
 
@@ -350,35 +349,35 @@ describe('Pedidos (/api/orders)', () => {
       const customer = await createCustomer();
       const order = await createOrder(customer._id);
 
-      const response = await request(app).delete(`/api/orders/${order._id}`);
+      const response = await asAdmin().delete(`/api/orders/${order._id}`);
 
       expect(response.status).to.equal(200);
       expect(response.body).to.deep.equal({ message: 'Pedido eliminado' });
-      const getResponse = await request(app).get(`/api/orders/${order._id}`);
+      const getResponse = await asAdmin().get(`/api/orders/${order._id}`);
       expect(getResponse.status).to.equal(404);
     });
 
     it('elimina en cascada la entrega asociada y el historial del pedido', async () => {
       const delivery = await createDelivery();
 
-      const response = await request(app).delete(`/api/orders/${delivery.order}`);
+      const response = await asAdmin().delete(`/api/orders/${delivery.order}`);
 
       expect(response.status).to.equal(200);
-      const deliveryResponse = await request(app).get(`/api/deliveries/${delivery._id}`);
+      const deliveryResponse = await asAdmin().get(`/api/deliveries/${delivery._id}`);
       expect(deliveryResponse.status).to.equal(404);
-      const eventsResponse = await request(app).get(`/api/orders/${delivery.order}/events`);
+      const eventsResponse = await asAdmin().get(`/api/orders/${delivery.order}/events`);
       expect(eventsResponse.status).to.equal(404);
     });
 
     it('devuelve 404 ORDER_NOT_FOUND si el pedido no existe', async () => {
-      const response = await request(app).delete(`/api/orders/${NON_EXISTENT_ID}`);
+      const response = await asAdmin().delete(`/api/orders/${NON_EXISTENT_ID}`);
 
       expect(response.status).to.equal(404);
       expect(response.body.error.code).to.equal('ORDER_NOT_FOUND');
     });
 
     it('devuelve 400 INVALID_ID si el id no tiene un formato valido', async () => {
-      const response = await request(app).delete(`/api/orders/${MALFORMED_ID}`);
+      const response = await asAdmin().delete(`/api/orders/${MALFORMED_ID}`);
 
       expect(response.status).to.equal(400);
       expect(response.body.error.code).to.equal('INVALID_ID');

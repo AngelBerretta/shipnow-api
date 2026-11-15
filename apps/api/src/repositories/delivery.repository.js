@@ -65,6 +65,12 @@ class DeliveryRepository {
       .populate('order')
       .populate('driver', 'firstName lastName email role');
   }
+
+  /** _id de los pedidos que tienen una entrega asignada a este repartidor. */
+  async findOrderIdsByDriver(driverId) {
+    return Delivery.distinct('order', { driver: driverId });
+  }
+
 }
 
 export default new DeliveryRepository();

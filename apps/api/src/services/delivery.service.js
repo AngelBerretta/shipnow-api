@@ -22,7 +22,9 @@ import {
   InvalidStatusTransitionError,
   OrderAlreadyProcessedError,
   DeliveryAlreadyCompletedError,
+  ForbiddenActionError
 } from '../errors/index.js';
+import { assertAllowed, canAccessDelivery, canModifyDelivery } from '../policies/access.policy.js';
 
 class DeliveryService {
   /**
@@ -30,7 +32,7 @@ class DeliveryService {
    * sin control (ver utils/pagination.js). Admite filtrar por `status`
    * y por `driver` (?status=in_transit&driver=<id>).
    */
-  async getAllDeliveries(query = {}) {
+async getAllDeliveries(query = {}, actor) {
     const pagination = parsePagination(query);
     const filter = {};
 
@@ -43,7 +45,7 @@ class DeliveryService {
     if (query.driver) {
       filter.driver = query.driver;
     }
-
+    Object.assign(filter, await this.#scopeFilterFor(actor));
     const [deliveries, total] = await Promise.all([
       deliveryRepository.findAll(filter, { skip: pagination.skip, limit: pagination.limit }),
       deliveryRepository.countAll(filter),
@@ -52,11 +54,12 @@ class DeliveryService {
     return { data: deliveries, pagination: buildPaginationMeta(pagination, total) };
   }
 
-  async getDeliveryById(id) {
+  async getDeliveryById(id, actor) {
     const delivery = await deliveryRepository.findById(id);
     if (!delivery) {
       throw new DeliveryNotFoundError();
     }
+    assertAllowed(!actor || canAccessDelivery(actor, delivery));
     return delivery;
   }
 
@@ -108,7 +111,7 @@ class DeliveryService {
    * picked_up -> in_transit -> delivered, sin saltos ni retrocesos. Cada
    * avance se refleja en el pedido asociado.
    */
-  async updateDeliveryStatus(id, status) {
+  async updateDeliveryStatus(id, status, actor) {
     if (!status) {
       throw new ValidationError('El estado es obligatorio');
     }
@@ -120,6 +123,7 @@ class DeliveryService {
     if (!delivery) {
       throw new DeliveryNotFoundError();
     }
+    assertAllowed(!actor || canModifyDelivery(actor, delivery), 'Solo podes actualizar tus propias entregas');    
     if (delivery.status === DELIVERY_STATUS.DELIVERED) {
       throw new DeliveryAlreadyCompletedError();
     }
@@ -165,6 +169,19 @@ class DeliveryService {
 
     return deleted;
   }
+
+  async #scopeFilterFor(actor) {
+    if (!actor || actor.role === ROLES.ADMIN) return {};
+    if (actor.role === ROLES.DRIVER) return { driver: actor._id };
+    if (actor.role === ROLES.CUSTOMER) {
+      return { order: { $in: await orderRepository.findIds({ customer: actor._id }) } };
+    }
+    if (actor.role === ROLES.STORE) {
+      return { order: { $in: await orderRepository.findIds({ store: actor._id }) } };
+    }
+    throw new ForbiddenActionError();
+  }
+
 }
 
 export default new DeliveryService();

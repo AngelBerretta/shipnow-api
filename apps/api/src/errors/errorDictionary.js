@@ -120,6 +120,23 @@ export const ERROR_DICTIONARY = Object.freeze({
     message: 'El archivo se envio en un campo inesperado',
   },
 
+  [ERROR_CODES.UNAUTHORIZED]: {
+    statusCode: 401,
+    message: 'Necesitas iniciar sesion para acceder a este recurso',
+  },
+  [ERROR_CODES.TOKEN_EXPIRED]: {
+    statusCode: 401,
+    message: 'El token expiro',
+  },
+  [ERROR_CODES.INVALID_CREDENTIALS]: {
+    statusCode: 401,
+    message: 'Email o contrasena incorrectos',
+  },
+  [ERROR_CODES.TOO_MANY_REQUESTS]: {
+    statusCode: 429,
+    message: 'Demasiados intentos: espera unos minutos y volve a probar',
+  },
+
   [ERROR_CODES.INTERNAL_ERROR]: {
     statusCode: 500,
     message: 'Error interno del servidor',

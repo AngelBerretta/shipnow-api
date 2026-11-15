@@ -2,7 +2,7 @@ import deliveryService from '../services/delivery.service.js';
 
 export async function getAll(req, res, next) {
   try {
-    const result = await deliveryService.getAllDeliveries(req.query);
+    const result = await deliveryService.getAllDeliveries(req.query, req.user);
     res.json(result);
   } catch (error) {
     next(error);
@@ -11,7 +11,7 @@ export async function getAll(req, res, next) {
 
 export async function getById(req, res, next) {
   try {
-    const delivery = await deliveryService.getDeliveryById(req.params.did);
+    const delivery = await deliveryService.getDeliveryById(req.params.did, req.user);
     res.json(delivery);
   } catch (error) {
     next(error);
@@ -29,7 +29,7 @@ export async function create(req, res, next) {
 
 export async function updateStatus(req, res, next) {
   try {
-    const updatedDelivery = await deliveryService.updateDeliveryStatus(req.params.did, req.body.status);
+    const updatedDelivery = await deliveryService.updateDeliveryStatus(req.params.did, req.body.status, req.user)
     res.json(updatedDelivery);
   } catch (error) {
     next(error);

@@ -23,7 +23,7 @@ services:
       MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/ruvika}
       NODE_ENV: ${NODE_ENV:-production}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-      JWT_SECRET: ${JWT_SECRET:-changeme}
+      JWT_SECRET: ${JWT_SECRET:?Definí JWT_SECRET (mínimo 32 caracteres)}
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
       ENABLE_INTERNAL_ROUTES: ${ENABLE_INTERNAL_ROUTES:-false}
     depends_on:

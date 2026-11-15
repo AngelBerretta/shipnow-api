@@ -74,7 +74,10 @@ class UserService {
     return this.#persistUser({ firstName, lastName, email, password, role: ROLES.ADMIN });
   }
 
-  async deleteUser(id) {
+  async deleteUser(id, actor) {
+    if (actor && String(actor._id) === String(id)) {
+      throw new ForbiddenActionError('No podes eliminar tu propia cuenta');
+    }
     const deleted = await userRepository.deleteById(id);
     if (!deleted) {
       throw new UserNotFoundError();

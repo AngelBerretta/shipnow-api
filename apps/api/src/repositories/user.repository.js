@@ -35,6 +35,11 @@ class UserRepository {
     return User.findOne({ email }).select('-password');
   }
 
+  /** Unico metodo que devuelve el hash de la contrasena: SOLO para el login. */
+  async findAuthByEmail(email) {
+    return User.findOne({ email });
+  }  
+
   async create(data) {
     const created = await User.create(data);
     const { password, ...rest } = created.toObject();

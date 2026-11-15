@@ -34,8 +34,11 @@ const swaggerDefinition = {
       'Arquitectura por capas (Router → Controller → Service → Repository) ' +
       'con manejo centralizado de errores: toda respuesta de error de la API ' +
       'tiene la misma forma (ver el schema `ErrorResponse`).\n\n' +
-      '**Autenticación:** esta versión de la API no implementa autenticación ' +
-      'ni autorización por token; todos los endpoints son de acceso libre.',
+      '**Autenticación:** `POST /api/auth/login` devuelve un `accessToken` (JWT, 15 min) y ' +
+      'un `refreshToken` (rota en cada uso). Enviá el access token en `Authorization: Bearer <token>` ' +
+      '(botón *Authorize*). Toda respuesta puede ser `401` (sin token o vencido) o `403` (sin permiso ' +
+      'para ese rol o recurso). Excepto `/api/auth/*` y `/api/health`, todos los endpoints requieren token; ' +
+      '`/api/mocks` y `/api/logs` son solo para `admin`.',
     contact: {
       name: 'Ruvika',
     },
@@ -46,6 +49,12 @@ const swaggerDefinition = {
       description: 'Servidor local de desarrollo',
     },
   ],
+  components: {
+    securitySchemes: {
+      bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+    },
+  },
+  security: [{ bearerAuth: [] }],  
   tags: [
     {
       name: 'Health',
@@ -87,6 +96,10 @@ const swaggerDefinition = {
         'multipart/form-data con Multer. Los archivos se guardan en el filesystem ' +
         'del servidor; en MongoDB solo se persisten sus metadatos.',
     },
+    {
+      name: 'Auth',
+      description: 'Inicio y cierre de sesión, renovación de tokens y perfil del usuario autenticado.',
+    },    
   ],
 };
 

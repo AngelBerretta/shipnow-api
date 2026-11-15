@@ -478,6 +478,10 @@
  *                 - UNEXPECTED_FILE_FIELD
  *                 - FILE_UPLOAD_FAILED
  *                 - INTERNAL_ERROR
+ *                 - UNAUTHORIZED
+ *                 - TOKEN_EXPIRED
+ *                 - INVALID_CREDENTIALS
+ *                 - TOO_MANY_REQUESTS
  *               example: VALIDATION_ERROR
  *             message:
  *               type: string
@@ -491,8 +495,7 @@
  *               oneOf:
  *                 - type: object
  *                 - type: array
- *                   items:
- *                     type: string
+ *                   items: {}
  *
  *     SuccessResponse:
  *       type: object

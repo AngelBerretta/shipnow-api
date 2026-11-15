@@ -19,6 +19,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  */
 process.env.NODE_ENV = 'test';
 dotenv.config({ path: path.resolve(__dirname, '../.env.test'), override: true });
+// JWT_SECRET de testing: si .env.test no lo define se usa este (solo para tests).
+process.env.JWT_SECRET ||= 'test-only-jwt-secret-not-for-production-0123456789';
 
 if (!process.env.MONGODB_URI || !process.env.MONGODB_URI.includes('test')) {
   // Red de seguridad: si falta .env.test o su MONGODB_URI no "parece" de
@@ -49,6 +51,13 @@ export const mochaHooks = {
    * test es responsable de crear, dentro de si mismo o de un
    * beforeEach, los datos que necesita (ver test/helpers/fixtures.js).
    */
+
+  /** Antes de cada test (la base queda vacía por el afterEach) se crea un admin y se lo loguea. */
+  async beforeEach() {
+    const { startAdminSession } = await import('./helpers/auth.js');
+    await startAdminSession();
+  },  
+  
   async afterEach() {
     const { collections } = mongoose.connection;
     await Promise.all(Object.values(collections).map((collection) => collection.deleteMany({})));

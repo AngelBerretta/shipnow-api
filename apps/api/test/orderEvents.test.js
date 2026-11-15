@@ -1,6 +1,5 @@
 import { expect } from 'chai';
-import request from 'supertest';
-import app from '../src/app.js';
+import { asAdmin } from './helpers/auth.js';
 import { ORDER_EVENT_TYPES, ORDER_STATUS, DELIVERY_STATUS, TRACKING_CODE } from '../src/constants/index.js';
 import {
   createCustomer,
@@ -19,7 +18,7 @@ describe('Historial de pedidos (/api/orders/:oid/events)', () => {
     const customer = await createCustomer();
     const order = await createOrder(customer._id);
 
-    const response = await request(app).get(`/api/orders/${order._id}/events`);
+    const response = await asAdmin().get(`/api/orders/${order._id}/events`);
 
     expect(response.status).to.equal(200);
     expect(response.body.order).to.equal(order._id);
@@ -33,7 +32,7 @@ describe('Historial de pedidos (/api/orders/:oid/events)', () => {
     const order = await createOrder(customer._id);
     await advanceOrder(order._id, ['assigned', 'picked_up']);
 
-    const response = await request(app).get(`/api/orders/${order._id}/events`);
+    const response = await asAdmin().get(`/api/orders/${order._id}/events`);
 
     expect(summarize(response.body.events)).to.deep.equal([
       [ORDER_EVENT_TYPES.ORDER_CREATED, null, 'created'],
@@ -46,7 +45,7 @@ describe('Historial de pedidos (/api/orders/:oid/events)', () => {
     const delivery = await createDelivery();
     await advanceDelivery(delivery._id);
 
-    const response = await request(app).get(`/api/orders/${delivery.order}/events`);
+    const response = await asAdmin().get(`/api/orders/${delivery.order}/events`);
 
     expect(summarize(response.body.events)).to.deep.equal([
       [ORDER_EVENT_TYPES.ORDER_CREATED, null, 'created'],
@@ -61,9 +60,9 @@ describe('Historial de pedidos (/api/orders/:oid/events)', () => {
   it('registra la eliminacion de la entrega cuando el pedido vuelve a created', async () => {
     const delivery = await createDelivery();
     await advanceDelivery(delivery._id, [DELIVERY_STATUS.PICKED_UP]);
-    await request(app).delete(`/api/deliveries/${delivery._id}`);
+    await asAdmin().delete(`/api/deliveries/${delivery._id}`);
 
-    const response = await request(app).get(`/api/orders/${delivery.order}/events`);
+    const response = await asAdmin().get(`/api/orders/${delivery.order}/events`);
 
     expect(summarize(response.body.events).at(-1)).to.deep.equal([ORDER_EVENT_TYPES.DELIVERY_REMOVED, 'picked_up', 'created']);
   });
@@ -71,22 +70,22 @@ describe('Historial de pedidos (/api/orders/:oid/events)', () => {
   it('un cambio de estado rechazado por la maquina de estados no deja evento', async () => {
     const customer = await createCustomer();
     const order = await createOrder(customer._id);
-    await request(app).patch(`/api/orders/${order._id}/status`).send({ status: ORDER_STATUS.DELIVERED });
+    await asAdmin().patch(`/api/orders/${order._id}/status`).send({ status: ORDER_STATUS.DELIVERED });
 
-    const response = await request(app).get(`/api/orders/${order._id}/events`);
+    const response = await asAdmin().get(`/api/orders/${order._id}/events`);
 
     expect(response.body.events).to.have.lengthOf(1);
   });
 
   it('devuelve 404 ORDER_NOT_FOUND si el pedido no existe', async () => {
-    const response = await request(app).get(`/api/orders/${NON_EXISTENT_ID}/events`);
+    const response = await asAdmin().get(`/api/orders/${NON_EXISTENT_ID}/events`);
 
     expect(response.status).to.equal(404);
     expect(response.body.error.code).to.equal('ORDER_NOT_FOUND');
   });
 
   it('devuelve 400 INVALID_ID si el id no tiene un formato valido', async () => {
-    const response = await request(app).get(`/api/orders/${MALFORMED_ID}/events`);
+    const response = await asAdmin().get(`/api/orders/${MALFORMED_ID}/events`);
 
     expect(response.status).to.equal(400);
     expect(response.body.error.code).to.equal('INVALID_ID');

@@ -1,6 +1,5 @@
 import { expect } from 'chai';
-import request from 'supertest';
-import app from '../src/app.js';
+import { asAdmin } from './helpers/auth.js';
 import { DOCUMENT_TYPES } from '../src/constants/index.js';
 import { createUser, createDelivery, NON_EXISTENT_ID } from './helpers/fixtures.js';
 
@@ -15,7 +14,7 @@ describe('Carga de archivos (Multer)', () => {
     it('sube un documento valido y devuelve 201 con los metadatos guardados', async () => {
       const user = await createUser();
 
-      const response = await request(app)
+      const response = await asAdmin()
         .post(`/api/users/${user._id}/documents`)
         .field('documentType', DOCUMENT_TYPES.DNI)
         .attach('file', PDF_BUFFER, { filename: 'dni-frente.pdf', contentType: 'application/pdf' });
@@ -38,7 +37,7 @@ describe('Carga de archivos (Multer)', () => {
     it('devuelve 400 FILE_REQUIRED si no se envia el archivo', async () => {
       const user = await createUser();
 
-      const response = await request(app)
+      const response = await asAdmin()
         .post(`/api/users/${user._id}/documents`)
         .field('documentType', DOCUMENT_TYPES.DNI);
 
@@ -50,7 +49,7 @@ describe('Carga de archivos (Multer)', () => {
     it('devuelve 400 VALIDATION_ERROR si no se envia el tipo de documento', async () => {
       const user = await createUser();
 
-      const response = await request(app)
+      const response = await asAdmin()
         .post(`/api/users/${user._id}/documents`)
         .attach('file', PDF_BUFFER, { filename: 'doc.pdf', contentType: 'application/pdf' });
 
@@ -61,7 +60,7 @@ describe('Carga de archivos (Multer)', () => {
     it('devuelve 400 INVALID_DOCUMENT_TYPE si el tipo de documento no pertenece al enum', async () => {
       const user = await createUser();
 
-      const response = await request(app)
+      const response = await asAdmin()
         .post(`/api/users/${user._id}/documents`)
         .field('documentType', 'pasaporte')
         .attach('file', PDF_BUFFER, { filename: 'doc.pdf', contentType: 'application/pdf' });
@@ -77,7 +76,7 @@ describe('Carga de archivos (Multer)', () => {
     it('devuelve 400 INVALID_FILE_TYPE si el archivo no es de un tipo permitido', async () => {
       const user = await createUser();
 
-      const response = await request(app)
+      const response = await asAdmin()
         .post(`/api/users/${user._id}/documents`)
         .field('documentType', DOCUMENT_TYPES.DNI)
         .attach('file', TXT_BUFFER, { filename: 'doc.txt', contentType: 'text/plain' });
@@ -87,7 +86,7 @@ describe('Carga de archivos (Multer)', () => {
     });
 
     it('devuelve 404 USER_NOT_FOUND si el usuario no existe', async () => {
-      const response = await request(app)
+      const response = await asAdmin()
         .post(`/api/users/${NON_EXISTENT_ID}/documents`)
         .field('documentType', DOCUMENT_TYPES.DNI)
         .attach('file', PDF_BUFFER, { filename: 'doc.pdf', contentType: 'application/pdf' });
@@ -101,7 +100,7 @@ describe('Carga de archivos (Multer)', () => {
     it('sube un comprobante valido y devuelve 201 con la entrega actualizada', async () => {
       const delivery = await createDelivery();
 
-      const response = await request(app)
+      const response = await asAdmin()
         .post(`/api/deliveries/${delivery._id}/proof`)
         .attach('file', PDF_BUFFER, { filename: 'firma-cliente.pdf', contentType: 'application/pdf' });
 
@@ -117,7 +116,7 @@ describe('Carga de archivos (Multer)', () => {
     it('devuelve 400 FILE_REQUIRED si no se envia el archivo', async () => {
       const delivery = await createDelivery();
 
-      const response = await request(app).post(`/api/deliveries/${delivery._id}/proof`);
+      const response = await asAdmin().post(`/api/deliveries/${delivery._id}/proof`);
 
       expect(response.status).to.equal(400);
       expect(response.body.error.code).to.equal('FILE_REQUIRED');
@@ -126,7 +125,7 @@ describe('Carga de archivos (Multer)', () => {
     it('devuelve 400 INVALID_DOCUMENT_TYPE si se envia un tipo de documento invalido', async () => {
       const delivery = await createDelivery();
 
-      const response = await request(app)
+      const response = await asAdmin()
         .post(`/api/deliveries/${delivery._id}/proof`)
         .field('documentType', 'inexistente')
         .attach('file', PDF_BUFFER, { filename: 'comprobante.pdf', contentType: 'application/pdf' });
@@ -136,7 +135,7 @@ describe('Carga de archivos (Multer)', () => {
     });
 
     it('devuelve 404 DELIVERY_NOT_FOUND si la entrega no existe', async () => {
-      const response = await request(app)
+      const response = await asAdmin()
         .post(`/api/deliveries/${NON_EXISTENT_ID}/proof`)
         .attach('file', PDF_BUFFER, { filename: 'comprobante.pdf', contentType: 'application/pdf' });
 

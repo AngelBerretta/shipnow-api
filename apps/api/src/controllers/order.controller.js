@@ -2,7 +2,7 @@ import orderService from '../services/order.service.js';
 
 export async function getAll(req, res, next) {
   try {
-    const result = await orderService.getAllOrders(req.query);
+    const result = await orderService.getAllOrders(req.query, req.user);
     res.json(result);
   } catch (error) {
     next(error);
@@ -11,7 +11,7 @@ export async function getAll(req, res, next) {
 
 export async function getById(req, res, next) {
   try {
-    const order = await orderService.getOrderById(req.params.oid);
+    const order = await orderService.getOrderById(req.params.oid, req.user);
     res.json(order);
   } catch (error) {
     next(error);
@@ -20,7 +20,7 @@ export async function getById(req, res, next) {
 
 export async function getEvents(req, res, next) {
   try {
-    const timeline = await orderService.getOrderEvents(req.params.oid);
+    const timeline = await orderService.getOrderEvents(req.params.oid, req.user);
     res.json(timeline);
   } catch (error) {
     next(error);
@@ -29,7 +29,7 @@ export async function getEvents(req, res, next) {
 
 export async function create(req, res, next) {
   try {
-    const { order, shippingCost } = await orderService.createOrder(req.body);
+    const { order, shippingCost } = await orderService.createOrder(req.body, req.user);
     res.status(201).json({
       order,
       shippingCost,

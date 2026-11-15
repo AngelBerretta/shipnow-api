@@ -2,7 +2,8 @@ import productRepository from '../repositories/product.repository.js';
 import userRepository from '../repositories/user.repository.js';
 import { PRODUCT_STATUS, ROLES } from '../constants/index.js';
 import { parsePagination, buildPaginationMeta } from '../utils/pagination.js';
-import { ProductNotFoundError, UserNotFoundError, ValidationError } from '../errors/index.js';
+import { ProductNotFoundError, UserNotFoundError, ValidationError, ForbiddenActionError } from '../errors/index.js';
+import { assertAllowed, canReadProduct, canManageProduct } from '../policies/access.policy.js';
 
 class ProductService {
   /**
@@ -10,13 +11,14 @@ class ProductService {
    * sin control (ver utils/pagination.js). Sigue admitiendo filtrar por
    * `category`, `status` y, ahora, `owner` (tienda duena del producto).
    */
-  async getAllProducts(query = {}) {
+  async getAllProducts(query = {}, actor) {
     const pagination = parsePagination(query);
     const filter = {};
     if (query.category) filter.category = query.category;
     if (query.status) filter.status = query.status;
     if (query.owner) filter.owner = query.owner;
-
+    // Una tienda solo ve su propio catalogo (admin y customer ven todo).
+    if (actor?.role === ROLES.STORE) filter.owner = actor._id;
     const [products, total] = await Promise.all([
       productRepository.findAll(filter, { skip: pagination.skip, limit: pagination.limit }),
       productRepository.countAll(filter),
@@ -25,15 +27,16 @@ class ProductService {
     return { data: products, pagination: buildPaginationMeta(pagination, total) };
   }
 
-  async getProductById(id) {
+  async getProductById(id, actor) {
     const product = await productRepository.findById(id);
     if (!product) {
       throw new ProductNotFoundError();
     }
+    assertAllowed(!actor || canReadProduct(actor, product));
     return product;
   }
 
-  async createProduct({ name, description, price, stock, category, status, owner }) {
+  async createProduct({ name, description, price, stock, category, status, owner: requestedOwner }, actor) {
     if (!name || price === undefined || stock === undefined) {
       throw new ValidationError('Faltan datos obligatorios (name, price, stock)');
     }
@@ -43,6 +46,7 @@ class ProductService {
     if (stock < 0) {
       throw new ValidationError('El stock no puede ser negativo');
     }
+    const owner = this.#resolveOwner(requestedOwner, actor);
     if (owner) {
       await this.#assertOwnerIsStore(owner);
     }
@@ -58,11 +62,15 @@ class ProductService {
     });
   }
 
-  async updateProduct(id, { name, description, price, stock, category, status, owner }) {
+async updateProduct(id, { name, description, price, stock, category, status, owner }, actor) {
     const product = await productRepository.findById(id);
     if (!product) {
       throw new ProductNotFoundError();
     }
+    assertAllowed(!actor || canManageProduct(actor, product));
+    if (actor?.role === ROLES.STORE && owner !== undefined && String(owner) !== String(actor._id)) {
+      throw new ForbiddenActionError('No podes transferir un producto a otra tienda');
+    }    
 
     if (price !== undefined && price < 0) {
       throw new ValidationError('El precio no puede ser negativo');
@@ -91,12 +99,22 @@ class ProductService {
     return productRepository.updateById(id, updateData);
   }
 
-  async deleteProduct(id) {
-    const deleted = await productRepository.deleteById(id);
-    if (!deleted) {
+  async deleteProduct(id, actor) {
+    const product = await productRepository.findById(id);
+    if (!product) {
       throw new ProductNotFoundError();
     }
-    return deleted;
+    assertAllowed(!actor || canManageProduct(actor, product));
+    return productRepository.deleteById(id);
+  }
+
+  /** Una tienda solo crea productos propios: el owner se fuerza a su id. */
+  #resolveOwner(requestedOwner, actor) {
+    if (actor?.role !== ROLES.STORE) return requestedOwner;
+    if (requestedOwner && String(requestedOwner) !== String(actor._id)) {
+      throw new ForbiddenActionError('Solo podes crear productos de tu tienda');
+    }
+    return actor._id;
   }
 
   /**

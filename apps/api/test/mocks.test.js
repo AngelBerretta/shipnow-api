@@ -1,12 +1,11 @@
 import { expect } from 'chai';
-import request from 'supertest';
-import app from '../src/app.js';
+import { asAdmin } from './helpers/auth.js';
 import { ROLES } from '../src/constants/index.js';
 
 describe('Mocks (/api/mocks)', () => {
   describe('GET /api/mocks/users (preview, no persiste)', () => {
     it('devuelve 200 con la cantidad por defecto y persisted:false', async () => {
-      const response = await request(app).get('/api/mocks/users');
+      const response = await asAdmin().get('/api/mocks/users');
 
       expect(response.status).to.equal(200);
       expect(response.body.persisted).to.equal(false);
@@ -16,7 +15,7 @@ describe('Mocks (/api/mocks)', () => {
     });
 
     it('respeta la cantidad pedida por query param', async () => {
-      const response = await request(app).get('/api/mocks/users?count=3');
+      const response = await asAdmin().get('/api/mocks/users?count=3');
 
       expect(response.status).to.equal(200);
       expect(response.body.count).to.equal(3);
@@ -24,14 +23,14 @@ describe('Mocks (/api/mocks)', () => {
     });
 
     it('respeta el rol pedido por query param', async () => {
-      const response = await request(app).get(`/api/mocks/users?count=5&role=${ROLES.DRIVER}`);
+      const response = await asAdmin().get(`/api/mocks/users?count=5&role=${ROLES.DRIVER}`);
 
       expect(response.status).to.equal(200);
       response.body.data.forEach((user) => expect(user.role).to.equal(ROLES.DRIVER));
     });
 
     it('devuelve 400 INVALID_MOCK_QUANTITY si la cantidad es negativa', async () => {
-      const response = await request(app).get('/api/mocks/users?count=-1');
+      const response = await asAdmin().get('/api/mocks/users?count=-1');
 
       expect(response.status).to.equal(400);
       expect(response.body.success).to.equal(false);
@@ -40,14 +39,14 @@ describe('Mocks (/api/mocks)', () => {
     });
 
     it('devuelve 400 INVALID_MOCK_QUANTITY si la cantidad no es numerica', async () => {
-      const response = await request(app).get('/api/mocks/users?count=abc');
+      const response = await asAdmin().get('/api/mocks/users?count=abc');
 
       expect(response.status).to.equal(400);
       expect(response.body.error.code).to.equal('INVALID_MOCK_QUANTITY');
     });
 
     it('devuelve 400 INVALID_ROLE si el rol no pertenece al enum', async () => {
-      const response = await request(app).get('/api/mocks/users?role=inexistente');
+      const response = await asAdmin().get('/api/mocks/users?role=inexistente');
 
       expect(response.status).to.equal(400);
       expect(response.body.error.code).to.equal('INVALID_ROLE');
@@ -56,7 +55,7 @@ describe('Mocks (/api/mocks)', () => {
 
   describe('GET /api/mocks/orders y /api/mocks/deliveries (preview)', () => {
     it('GET /api/mocks/orders devuelve 200 con pedidos simulados', async () => {
-      const response = await request(app).get('/api/mocks/orders?count=4');
+      const response = await asAdmin().get('/api/mocks/orders?count=4');
 
       expect(response.status).to.equal(200);
       expect(response.body.persisted).to.equal(false);
@@ -65,7 +64,7 @@ describe('Mocks (/api/mocks)', () => {
     });
 
     it('GET /api/mocks/deliveries devuelve 200 con entregas simuladas', async () => {
-      const response = await request(app).get('/api/mocks/deliveries?count=2');
+      const response = await asAdmin().get('/api/mocks/deliveries?count=2');
 
       expect(response.status).to.equal(200);
       expect(response.body.data).to.have.lengthOf(2);
@@ -75,7 +74,7 @@ describe('Mocks (/api/mocks)', () => {
 
   describe('GET /api/mocks/full (preview de dataset relacionado)', () => {
     it('devuelve 200 con usuarios, pedidos y entregas simulados y coherentes entre si', async () => {
-      const response = await request(app).get('/api/mocks/full?users=3&orders=2&deliveries=1');
+      const response = await asAdmin().get('/api/mocks/full?users=3&orders=2&deliveries=1');
 
       expect(response.status).to.equal(200);
       expect(response.body.persisted).to.equal(false);
@@ -87,7 +86,7 @@ describe('Mocks (/api/mocks)', () => {
 
   describe('POST /api/mocks/generate (seed real en MongoDB)', () => {
     it('inserta datos reales y devuelve 201 con persisted:true y el resumen de lo creado', async () => {
-      const response = await request(app)
+      const response = await asAdmin()
         .post('/api/mocks/generate')
         .send({ users: 4, orders: 2, deliveries: 1 });
 
@@ -100,13 +99,13 @@ describe('Mocks (/api/mocks)', () => {
       // Los datos quedaron realmente en la base: se pueden leer por la API
       // normal. GET /api/users ahora devuelve un listado paginado
       // ({ data, pagination }), no un arreglo plano.
-      const usersResponse = await request(app).get('/api/users');
+      const usersResponse = await asAdmin().get('/api/users');
       expect(usersResponse.body.data.length).to.be.at.least(4);
       expect(usersResponse.body.pagination.total).to.be.at.least(4);
     });
 
     it('devuelve 400 INVALID_MOCK_QUANTITY si alguna cantidad es invalida', async () => {
-      const response = await request(app)
+      const response = await asAdmin()
         .post('/api/mocks/generate')
         .send({ users: -5, orders: 0, deliveries: 0 });
 
@@ -116,7 +115,7 @@ describe('Mocks (/api/mocks)', () => {
     });
 
     it('devuelve 400 VALIDATION_ERROR si se piden pedidos sin haber generado usuarios customer', async () => {
-      const response = await request(app)
+      const response = await asAdmin()
         .post('/api/mocks/generate')
         .send({ users: 0, orders: 2, deliveries: 0 });
 

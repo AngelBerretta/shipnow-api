@@ -2,18 +2,17 @@ import { Router } from 'express';
 import * as userController from '../controllers/user.controller.js';
 import * as uploadController from '../controllers/upload.controller.js';
 import { userDocumentUpload } from '../config/multer.config.js';
+import { authenticate, authorize, authorizeSelfOr } from '../middlewares/auth.js';
+import { ROLES } from '../constants/index.js';
 
 const router = Router();
 
-router.get('/', userController.getAll);
-router.get('/:uid', userController.getById);
-router.post('/', userController.create);
-router.delete('/:uid', userController.remove);
+router.get('/', authenticate, authorize(ROLES.ADMIN), userController.getAll);
+router.get('/:uid', authenticate, authorizeSelfOr('uid', ROLES.ADMIN), userController.getById);
+router.post('/', authenticate, authorize(ROLES.ADMIN), userController.create);
+router.delete('/:uid', authenticate, authorize(ROLES.ADMIN), userController.remove);
 
-// Carga de documentos del usuario (DNI, licencia, etc). `userDocumentUpload`
-// (src/config/multer.config.js) procesa el multipart/form-data ANTES del
-// controller: si falla (tipo no permitido, tamaño excedido, campo
-// incorrecto), nunca llega a uploadController.
-router.post('/:uid/documents', userDocumentUpload, uploadController.uploadUserDocument);
+// authenticate/authorize van ANTES de Multer: si no hay permiso, el archivo ni se escribe.
+router.post('/:uid/documents', authenticate, authorizeSelfOr('uid', ROLES.ADMIN), userDocumentUpload, uploadController.uploadUserDocument);
 
 export default router;

@@ -41,3 +41,10 @@ export {
   UnexpectedFileFieldError,
   FileUploadError,
 } from './file.errors.js';
+
+export {
+  UnauthorizedError,
+  TokenExpiredError,
+  InvalidCredentialsError,
+  TooManyRequestsError,
+} from './auth.errors.js';

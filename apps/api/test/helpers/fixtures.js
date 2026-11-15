@@ -1,5 +1,5 @@
-import request from 'supertest';
-import app from '../../src/app.js';
+import { asAdmin, TEST_PASSWORD } from './auth.js';
+import userService from '../../src/services/user.service.js';
 import { ROLES } from '../../src/constants/index.js';
 
 /**
@@ -23,20 +23,16 @@ export function buildUserPayload(overrides = {}) {
     firstName: 'Test',
     lastName: `User${sequence}`,
     email: `test.user.${Date.now()}.${sequence}@ruvika-tests.com`,
-    password: 'Test1234!',
+    password: TEST_PASSWORD,
     role: ROLES.CUSTOMER,
     ...overrides,
   };
 }
 
-/** Crea un usuario real via POST /api/users y devuelve el body de la respuesta. */
+/** Crea un usuario real por el UserService (mismas reglas que el alta) y lo devuelve como JSON plano. */
 export async function createUser(overrides = {}) {
-  const payload = buildUserPayload(overrides);
-  const response = await request(app).post('/api/users').send(payload);
-  if (response.status !== 201) {
-    throw new Error(`No se pudo crear el usuario de prueba: ${JSON.stringify(response.body)}`);
-  }
-  return response.body;
+  const user = await userService.createUser(buildUserPayload(overrides));
+  return JSON.parse(JSON.stringify(user));
 }
 
 export const createCustomer = (overrides = {}) => createUser({ ...overrides, role: ROLES.CUSTOMER });
@@ -56,7 +52,7 @@ export function buildOrderPayload(customerId, overrides = {}) {
 /** Crea un pedido real via POST /api/orders y devuelve el pedido creado. */
 export async function createOrder(customerId, overrides = {}) {
   const payload = buildOrderPayload(customerId, overrides);
-  const response = await request(app).post('/api/orders').send(payload);
+  const response = await asAdmin().post('/api/orders').send(payload);
   if (response.status !== 201) {
     throw new Error(`No se pudo crear el pedido de prueba: ${JSON.stringify(response.body)}`);
   }
@@ -73,7 +69,7 @@ export async function createDelivery(overrides = {}) {
   const order = await createOrder(customer._id);
   const payload = { order: order._id, driver: driver._id, ...overrides };
 
-  const response = await request(app).post('/api/deliveries').send(payload);
+  const response = await asAdmin().post('/api/deliveries').send(payload);
   if (response.status !== 201) {
     throw new Error(`No se pudo crear la entrega de prueba: ${JSON.stringify(response.body)}`);
   }
@@ -87,7 +83,7 @@ export const DELIVERY_PATH_AFTER_ASSIGNED = ['picked_up', 'in_transit', 'deliver
 export async function advanceDelivery(deliveryId, statuses = DELIVERY_PATH_AFTER_ASSIGNED) {
   let response;
   for (const status of statuses) {
-    response = await request(app).patch(`/api/deliveries/${deliveryId}/status`).send({ status });
+    response = await asAdmin().patch(`/api/deliveries/${deliveryId}/status`).send({ status });
     if (response.status !== 200) {
       throw new Error(`No se pudo avanzar la entrega a "${status}": ${JSON.stringify(response.body)}`);
     }
@@ -99,7 +95,7 @@ export async function advanceDelivery(deliveryId, statuses = DELIVERY_PATH_AFTER
 export async function advanceOrder(orderId, statuses = ['assigned', 'picked_up', 'in_transit', 'delivered']) {
   let response;
   for (const status of statuses) {
-    response = await request(app).patch(`/api/orders/${orderId}/status`).send({ status });
+    response = await asAdmin().patch(`/api/orders/${orderId}/status`).send({ status });
     if (response.status !== 200) {
       throw new Error(`No se pudo avanzar el pedido a "${status}": ${JSON.stringify(response.body)}`);
     }

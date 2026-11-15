@@ -9,6 +9,7 @@
  * /api/health:
  *   get:
  *     tags: [Health]
+ *     security: []
  *     summary: Verificar el estado del servidor
  *     description: >
  *       Health check simple para orquestadores y monitoreo (Docker,

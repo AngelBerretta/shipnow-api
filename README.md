@@ -46,7 +46,7 @@ ADMIN_EMAIL=admin@ruvika.com ADMIN_PASSWORD='una-clave-larga' npm run seed:admin
 ## Estado del roadmap
 
 - [x] **Etapa 0** — Preparación y deuda técnica (ver [docs/etapa-0.md](docs/etapa-0.md))
-- [ ] Etapa 1 — Autenticación, autorización y permisos por rol
+- [x] Etapa 1 — Autenticación, autorización y permisos por rol (ver [docs/etapa-1.md](docs/etapa-1.md))
 - [ ] Etapa 2 — Dashboard administrativo
 - [ ] Etapa 3 — PWA para repartidores
 - [ ] Etapa 4 — Portal de seguimiento para clientes

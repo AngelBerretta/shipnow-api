@@ -24,6 +24,7 @@ entorno validada al arranque.
 - **Mocha** + **Chai** + **Supertest** — testing funcional end-to-end.
 - **Docker** + **docker-compose** — contenerización y entorno reproducible.
 - **ESLint** — linting de código.
+- **JWT** (`jsonwebtoken`) + **Zod** + **helmet** + **express-rate-limit**
 
 ## Instalación y ejecución local
 
@@ -202,8 +203,9 @@ mediante el glob `apis: ['./src/docs/*.docs.js']` configurado en
 
 ### Aclaraciones para probar los endpoints
 
-- La API **no implementa autenticación**: todos los endpoints de `/api/docs`
-  son de acceso libre, sin token ni API key.
+- **Para probar endpoints en Swagger:** hacé `POST /api/auth/login` con
+  `{ "email": "...", "password": "..." }`, copiá el `accessToken` de la
+  respuesta y usalo en el botón **Authorize**
 - Para probar endpoints que dependen de datos existentes (por ejemplo,
   crear una entrega necesita un pedido en estado `created` y un usuario con
   rol `driver`), lo más rápido es sembrar la base primero con
@@ -549,14 +551,15 @@ entorno, secreto JWT, nivel de logs, URL de servicios externos):
 | `MONGODB_URI`                 | Sí          | Cadena de conexión a MongoDB |
 | `NODE_ENV`                    | Sí          | `development` \| `production` \| `test` |
 | `LOG_LEVEL`                   | No          | Nivel mínimo de log; si se omite, se infiere de `NODE_ENV` |
-| `JWT_SECRET`                  | No*         | Reservado para cuando se agregue autenticación (esta versión de la API no implementa auth) |
+| `JWT_SECRET`                  | Sí          | Secreto para firmar los JWT (HS256). **Mínimo 32 caracteres.** Generarlo con `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`. Sin esta variable la API no arranca. |
+| `ACCESS_TOKEN_TTL_MINUTES`    | No          | Vida del access token en minutos (default `15`). |
+| `REFRESH_TOKEN_TTL_DAYS`      | No          | Vida del refresh token en días (default `7`). |
+| `AUTH_RATE_LIMIT_MAX`         | No          | Intentos por IP cada 15 min en `/api/auth/*` (default `20`; en tests se sube a `10000`). |
+| `TRUST_PROXY`                 | No          | Cantidad de proxies delante de la API (Render = `1`). Necesario para que el rate limit vea la IP real del cliente. |
 | `CORS_ORIGIN`                 | No          | Origen(es) permitido(s) por CORS (`*` en dev, dominio real en producción) |
 | `EMAIL_SERVICE_URL`           | No          | URL de un proveedor real de email (hoy el envío está simulado con logs) |
 | `ENABLE_INTERNAL_ROUTES`      | No          | Fuerza Swagger/`/api/mocks`/`/api/logs` en producción (ver más abajo) |
 
-\* `JWT_SECRET` no es obligatoria hoy porque no hay autenticación
-implementada. El día que se agregue login/JWT, debe sumarse a la lista
-de variables críticas en `src/config/env.config.js`.
 
 Ningún valor sensible está escrito en el código: todo se lee desde
 `process.env` a través de `src/config/env.config.js`, el único archivo

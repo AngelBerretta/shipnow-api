@@ -59,6 +59,12 @@ class OrderRepository {
   async deleteById(id) {
     return Order.findByIdAndDelete(id);
   }
+
+  /** Solo los _id de los pedidos que cumplen el filtro (para acotar listados por rol). */
+  async findIds(filter = {}) {
+    return Order.distinct('_id', filter);
+  }
+
 }
 
 export default new OrderRepository();

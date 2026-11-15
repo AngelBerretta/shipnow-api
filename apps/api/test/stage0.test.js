@@ -1,7 +1,6 @@
 import { expect } from 'chai';
-import request from 'supertest';
+import { asAdmin } from './helpers/auth.js';
 import bcrypt from 'bcryptjs';
-import app from '../src/app.js';
 import User from '../src/models/user.model.js';
 import userService from '../src/services/user.service.js';
 import { ROLES } from '../src/constants/index.js';
@@ -15,7 +14,7 @@ describe('Preparacion para autenticacion (Etapa 0)', () => {
     it('POST /api/users guarda un hash bcrypt, nunca la contrasena en texto plano', async () => {
       const payload = buildUserPayload();
 
-      const response = await request(app).post('/api/users').send(payload);
+      const response = await asAdmin().post('/api/users').send(payload);
 
       expect(response.status).to.equal(201);
       expect(response.body).to.not.have.property('password');
@@ -36,7 +35,7 @@ describe('Preparacion para autenticacion (Etapa 0)', () => {
     });
 
     it('devuelve 400 VALIDATION_ERROR si la contrasena no es un texto', async () => {
-      const response = await request(app).post('/api/users').send(buildUserPayload({ password: 12345678 }));
+      const response = await asAdmin().post('/api/users').send(buildUserPayload({ password: 12345678 }));
 
       expect(response.status).to.equal(400);
       expect(response.body.error.code).to.equal('VALIDATION_ERROR');
@@ -78,7 +77,7 @@ describe('Preparacion para autenticacion (Etapa 0)', () => {
     });
 
     it('la alta publica sigue bloqueando el rol admin (403)', async () => {
-      const response = await request(app).post('/api/users').send(buildUserPayload({ role: ROLES.ADMIN }));
+      const response = await asAdmin().post('/api/users').send(buildUserPayload({ role: ROLES.ADMIN }));
 
       expect(response.status).to.equal(403);
     });
@@ -90,14 +89,14 @@ describe('Preparacion para autenticacion (Etapa 0)', () => {
     it('crea un producto asociado a una tienda', async () => {
       const store = await createStore();
 
-      const response = await request(app).post('/api/products').send(productPayload({ owner: store._id }));
+      const response = await asAdmin().post('/api/products').send(productPayload({ owner: store._id }));
 
       expect(response.status).to.equal(201);
       expect(response.body.owner).to.equal(store._id);
     });
 
     it('sin owner el producto queda con owner null', async () => {
-      const response = await request(app).post('/api/products').send(productPayload());
+      const response = await asAdmin().post('/api/products').send(productPayload());
 
       expect(response.status).to.equal(201);
       expect(response.body.owner).to.equal(null);
@@ -106,14 +105,14 @@ describe('Preparacion para autenticacion (Etapa 0)', () => {
     it('devuelve 400 VALIDATION_ERROR si el owner no tiene rol store', async () => {
       const customer = await createCustomer();
 
-      const response = await request(app).post('/api/products').send(productPayload({ owner: customer._id }));
+      const response = await asAdmin().post('/api/products').send(productPayload({ owner: customer._id }));
 
       expect(response.status).to.equal(400);
       expect(response.body.error.code).to.equal('VALIDATION_ERROR');
     });
 
     it('devuelve 404 USER_NOT_FOUND si el owner no existe', async () => {
-      const response = await request(app).post('/api/products').send(productPayload({ owner: NON_EXISTENT_ID }));
+      const response = await asAdmin().post('/api/products').send(productPayload({ owner: NON_EXISTENT_ID }));
 
       expect(response.status).to.equal(404);
       expect(response.body.error.code).to.equal('USER_NOT_FOUND');
@@ -121,11 +120,11 @@ describe('Preparacion para autenticacion (Etapa 0)', () => {
 
     it('permite asignar el owner al actualizar y filtrar el listado por owner', async () => {
       const store = await createStore();
-      const created = await request(app).post('/api/products').send(productPayload());
-      await request(app).post('/api/products').send(productPayload({ name: 'Otro' }));
+      const created = await asAdmin().post('/api/products').send(productPayload());
+      await asAdmin().post('/api/products').send(productPayload({ name: 'Otro' }));
 
-      const updated = await request(app).put(`/api/products/${created.body._id}`).send({ owner: store._id });
-      const list = await request(app).get(`/api/products?owner=${store._id}`);
+      const updated = await asAdmin().put(`/api/products/${created.body._id}`).send({ owner: store._id });
+      const list = await asAdmin().get(`/api/products?owner=${store._id}`);
 
       expect(updated.status).to.equal(200);
       expect(updated.body.owner).to.equal(store._id);

@@ -13,8 +13,22 @@ import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 import { setupSwagger } from './config/swagger.config.js';
 import config from './config/index.js';
 import logger from './config/logger.config.js';
+import helmet from 'helmet';
+import authRouter from './routes/auth.routes.js';
+import { authenticate, authorize } from './middlewares/auth.js';
+import { ROLES } from './constants/index.js';
 
 const app = express();
+
+// Detras de un proxy (Render) hay que confiar en X-Forwarded-For, o el rate
+// limit vería la IP del proxy y cortaria a todos los clientes juntos.
+if (config.trustProxy > 0) {
+  app.set('trust proxy', config.trustProxy);
+}
+
+// Cabeceras de seguridad HTTP. Si Swagger UI se rompe por la CSP por defecto
+// de helmet, se ajusta solo para /api/docs.
+app.use(helmet());
 
 // CORS_ORIGIN por env (default "*" en desarrollo). En produccion se
 // espera que apunte al dominio real del frontend, no a "*".
@@ -36,6 +50,7 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 // Health check: SIEMPRE disponible, en cualquier entorno (incluida
 // produccion). No requiere base de datos ni expone informacion sensible.
 app.use('/api/health', healthRouter);
+app.use('/api/auth', authRouter);
 
 /**
  * Endpoints internos: Swagger UI (/api/docs), generacion de datos de
@@ -53,8 +68,8 @@ const shouldExposeInternalRoutes = !config.isProduction || config.enableInternal
 
 if (shouldExposeInternalRoutes) {
   setupSwagger(app);
-  app.use('/api/mocks', mocksRouter);
-  app.use('/api/logs', logsRouter);
+  app.use('/api/mocks', authenticate, authorize(ROLES.ADMIN), mocksRouter);
+  app.use('/api/logs', authenticate, authorize(ROLES.ADMIN), logsRouter);
 } else {
   logger.info('Rutas internas (Swagger, /api/mocks, /api/logs) deshabilitadas en produccion.');
 }

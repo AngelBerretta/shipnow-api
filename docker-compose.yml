@@ -5,10 +5,13 @@
 # Dockerfile: docker-compose lo usa (build: .) para construir la imagen
 # de la API.
 #
-# Uso:
+# Uso (desde la raiz del repo):
 #   docker compose up --build
 #   docker compose down            # detiene y borra los contenedores
 #   docker compose down -v         # además borra el volumen de Mongo
+#
+# Primer administrador (con los contenedores levantados):
+#   docker compose exec -e ADMIN_EMAIL=admin@ruvika.com -e ADMIN_PASSWORD=una-clave-larga api npm run seed:admin
 
 services:
   api:
@@ -17,7 +20,7 @@ services:
       - "${PORT:-3000}:${PORT:-3000}"
     environment:
       PORT: ${PORT:-3000}
-      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/shipnow}
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/ruvika}
       NODE_ENV: ${NODE_ENV:-production}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       JWT_SECRET: ${JWT_SECRET:-changeme}
@@ -28,8 +31,8 @@ services:
     volumes:
       # Persisten fuera del contenedor: el filesystem del contenedor es
       # efímero (se pierde al recrearlo). Ver README, sección Docker.
-      - ./logs:/app/logs
-      - ./uploads:/app/uploads
+      - ./apps/api/logs:/app/apps/api/logs
+      - ./apps/api/uploads:/app/apps/api/uploads
 
   mongo:
     image: mongo:7

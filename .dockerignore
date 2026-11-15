@@ -1,20 +1,18 @@
 # Dependencias: se reinstalan dentro de la imagen con npm ci
-node_modules
+**/node_modules
 
 # Variables de entorno: nunca deben entrar a la imagen
-.env
-.env.local
-.env.test
-.env.production
+**/.env
+**/.env.*
 
 # Control de versiones
 .git
 .gitignore
 
 # Logs y archivos subidos: se generan en runtime, no son parte del build
-logs
-uploads
-*.log
+**/logs
+**/uploads
+**/*.log
 npm-debug.log*
 
 # Cobertura de tests / artefactos temporales
@@ -25,13 +23,12 @@ coverage
 .idea
 *.tmp
 
-
-
-
-# No hace falta dentro de la imagen de producción
-test
-.mocharc.json
-README.md
+# No hace falta dentro de la imagen de produccion
+apps/api/test
+apps/api/.mocharc.json
+packages/**/test
+docs
+**/*.md
 Dockerfile
 .dockerignore
 docker-compose.yml

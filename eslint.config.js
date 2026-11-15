@@ -1,9 +1,10 @@
 import js from '@eslint/js';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
 
 export default [
+  {
+    // Contenido generado o de terceros: no se lintea.
+    ignores: ['**/node_modules/**', '**/logs/**', '**/uploads/**', '**/coverage/**', '**/dist/**'],
+  },
   js.configs.recommended,
   {
     languageOptions: {
@@ -32,8 +33,6 @@ export default [
         // Permite el patrón `const { campoSensible, ...resto } = obj`
         // cuando el objetivo es EXCLUIR un campo antes de devolver el
         // resto (ej. sacar `password` en UserRepository.create()).
-        // La variable descartada nunca se usa a propósito — esa es
-        // justamente su función.
         ignoreRestSiblings: true,
       }],
     },
@@ -41,9 +40,8 @@ export default [
   {
     // Globals propios de Mocha (describe/it/hooks) y de Node (Buffer, para
     // armar archivos en memoria en los tests de carga de archivos), usados
-    // solo dentro de test/. El resto de las reglas de la config de arriba
-    // sigue aplicando.
-    files: ['test/**/*.js'],
+    // solo dentro de los tests de la API. El resto de las reglas sigue aplicando.
+    files: ['apps/api/test/**/*.js'],
     languageOptions: {
       globals: {
         describe: 'readonly',
@@ -54,6 +52,13 @@ export default [
         afterEach: 'readonly',
         Buffer: 'readonly',
       },
+    },
+  },
+  {
+    // Tests del paquete shared: usan node:test (sin globals).
+    files: ['packages/**/test/**/*.js'],
+    languageOptions: {
+      globals: { Buffer: 'readonly' },
     },
   },
 ];

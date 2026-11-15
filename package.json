@@ -1,41 +1,29 @@
 {
-  "name": "shipnow-base",
-  "version": "1.0.0",
-  "description": "ShipNow API - Base para refactorizacion a arquitectura por capas",
-  "main": "src/server.js",
+  "name": "ruvika",
+  "version": "0.1.0",
+  "description": "Ruvika - plataforma de gestion logistica (monorepo: API, paneles y apps)",
+  "private": true,
   "type": "module",
-  "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "lint": "eslint .",
-    "test": "mocha",
-    "test:watch": "mocha --watch"
-  },
-  "keywords": [
-    "backend",
-    "api",
-    "logistica",
-    "coderhouse"
+  "workspaces": [
+    "apps/*",
+    "packages/*"
   ],
-  "license": "MIT",
-  "dependencies": {
-    "compression": "^1.7.5",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "mongoose": "^8.12.1",
-    "multer": "^2.2.0",
-    "swagger-jsdoc": "^6.3.0",
-    "swagger-ui-express": "^5.0.1",
-    "winston": "^3.19.0",
-    "winston-daily-rotate-file": "^5.0.0"
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "npm run dev -w @ruvika/api",
+    "start": "npm run start -w @ruvika/api",
+    "test": "npm test --workspaces --if-present",
+    "test:api": "npm test -w @ruvika/api",
+    "test:shared": "npm test -w @ruvika/shared",
+    "lint": "eslint .",
+    "seed:admin": "npm run seed:admin -w @ruvika/api",
+    "migrate:stage0": "npm run migrate:stage0 -w @ruvika/api"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "chai": "^6.2.2",
-    "eslint": "^10.8.0",
-    "mocha": "^11.8.0",
-    "nodemon": "^3.1.9",
-    "supertest": "^7.2.2"
-  }
+    "eslint": "^10.8.0"
+  },
+  "license": "MIT"
 }

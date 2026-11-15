@@ -1,39 +1,44 @@
-# ShipNow API — imagen de producción
+# Ruvika API — imagen de produccion (monorepo)
+#
+# Se construye desde la RAIZ del repo (el contexto tiene que incluir
+# packages/shared, que la API importa como @ruvika/shared):
+#
+#   docker build -t ruvika-api .
 #
 # Imagen liviana basada en node:20-alpine. Solo se instalan las
-# dependencias de PRODUCCION (npm ci --omit=dev): eslint, mocha, chai,
-# supertest y nodemon quedan fuera de la imagen final.
+# dependencias de PRODUCCION de la API (npm ci --omit=dev -w @ruvika/api):
+# eslint, mocha, chai, supertest y nodemon quedan fuera de la imagen final.
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Copiar primero solo los manifests para aprovechar la cache de capas de
-# Docker: si package.json/package-lock.json no cambian, "npm ci" no se
-# vuelve a ejecutar en builds posteriores aunque el código fuente sí
-# haya cambiado.
+# Primero solo los manifests (cache de capas de Docker): si no cambian
+# package.json / package-lock.json, "npm ci" no se vuelve a ejecutar
+# aunque el codigo fuente si haya cambiado.
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+COPY apps/api/package.json apps/api/package.json
+COPY packages/shared/package.json packages/shared/package.json
+RUN npm ci --omit=dev -w @ruvika/api
 
-# Recién acá se copia el resto del código. Ver .dockerignore para lo que
-# NUNCA entra a la imagen (node_modules, .env, .git, logs/, uploads/,
-# tests, el propio Dockerfile, etc).
-COPY . .
+# Recien aca se copia el codigo. Ver .dockerignore para lo que NUNCA
+# entra a la imagen (node_modules, .env, .git, logs/, uploads/, tests, etc).
+COPY packages/shared packages/shared
+COPY apps/api apps/api
 
-# logs/ y uploads/ las crea la propia app en tiempo de ejecución si no
-# existen (ver logger.config.js y multer.config.js), pero se pre-crean
-# acá con el dueño correcto para que el usuario no-root "node" (ver
-# USER más abajo) pueda escribir en ellas.
+# La app corre desde apps/api: ahi se crean logs/ y uploads/ (rutas
+# relativas al directorio de trabajo, ver logger.config.js y
+# multer.config.js). Se pre-crean con el duenio correcto para que el
+# usuario no-root "node" (ver USER mas abajo) pueda escribir en ellas.
+WORKDIR /app/apps/api
 RUN mkdir -p logs uploads/users uploads/deliveries \
     && chown -R node:node /app
 
-# Mismo puerto que la app expone vía PORT (ver src/config/env.config.js
-# y la variable de entorno PORT). Si se cambia PORT en runtime, hay que
-# publicar ese otro puerto al correr el contenedor (ver README).
+# Mismo puerto que la app expone via PORT (ver apps/api/src/config/env.config.js).
+# Si se cambia PORT en runtime, hay que publicar ese otro puerto (ver README).
 EXPOSE 3000
 
 # Corre como usuario no-root: la imagen base node:*-alpine ya trae un
-# usuario "node" creado. Ejecutar como root dentro del contenedor no
-# aporta nada acá y es una mala práctica de seguridad evitable.
+# usuario "node" creado.
 USER node
 
 CMD ["node", "src/server.js"]

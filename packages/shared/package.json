@@ -1,0 +1,15 @@
+{
+  "name": "@ruvika/shared",
+  "version": "0.1.0",
+  "description": "Constantes, estados y reglas compartidas entre la API y los frontends de Ruvika",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}

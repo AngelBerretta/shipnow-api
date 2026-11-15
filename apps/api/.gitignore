@@ -1,0 +1,36 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno
+.env
+.env.local
+.env.test
+.env.production
+
+# Logs
+npm-debug.log*
+logs/*
+!logs/.gitkeep
+*.log
+
+# Archivos subidos por los usuarios (Multer). Solo se versiona la
+# estructura de carpetas (.gitkeep); los archivos reales nunca van al
+# repo. En la base solo se guardan los metadatos (ver fileMetadata.schema.js).
+uploads/*
+!uploads/.gitkeep
+!uploads/users/
+!uploads/deliveries/
+uploads/users/*
+!uploads/users/.gitkeep
+uploads/deliveries/*
+!uploads/deliveries/.gitkeep
+
+# Sistema
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+
+

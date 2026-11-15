@@ -1,0 +1,43 @@
+{
+  "name": "@ruvika/api",
+  "version": "1.1.0",
+  "description": "Ruvika API - logistica: usuarios, pedidos, entregas y productos",
+  "private": true,
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "mocha",
+    "test:watch": "mocha --watch",
+    "seed:admin": "node scripts/seed-admin.js",
+    "migrate:stage0": "node scripts/migrate-stage0.js"
+  },
+  "keywords": [
+    "backend",
+    "api",
+    "logistica",
+    "coderhouse"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@ruvika/shared": "^0.1.0",
+    "bcryptjs": "^3.0.2",
+    "compression": "^1.7.5",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongoose": "^8.12.1",
+    "multer": "^2.2.0",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1",
+    "winston": "^3.19.0",
+    "winston-daily-rotate-file": "^5.0.0"
+  },
+  "devDependencies": {
+    "chai": "^6.2.2",
+    "mocha": "^11.8.0",
+    "nodemon": "^3.1.9",
+    "supertest": "^7.2.2"
+  }
+}

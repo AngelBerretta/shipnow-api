@@ -10,6 +10,7 @@ const router = Router();
 router.get('/', authenticate, authorize(ROLES.ADMIN), userController.getAll);
 router.get('/:uid', authenticate, authorizeSelfOr('uid', ROLES.ADMIN), userController.getById);
 router.post('/', authenticate, authorize(ROLES.ADMIN), userController.create);
+router.patch('/:uid', authenticate, authorize(ROLES.ADMIN), userController.update);
 router.delete('/:uid', authenticate, authorize(ROLES.ADMIN), userController.remove);
 
 // authenticate/authorize van ANTES de Multer: si no hay permiso, el archivo ni se escribe.

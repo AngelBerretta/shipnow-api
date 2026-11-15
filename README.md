@@ -47,7 +47,7 @@ ADMIN_EMAIL=admin@ruvika.com ADMIN_PASSWORD='una-clave-larga' npm run seed:admin
 
 - [x] **Etapa 0** — Preparación y deuda técnica (ver [docs/etapa-0.md](docs/etapa-0.md))
 - [x] Etapa 1 — Autenticación, autorización y permisos por rol (ver [docs/etapa-1.md](docs/etapa-1.md))
-- [ ] Etapa 2 — Dashboard administrativo
+- [x] Etapa 2 — Dashboard administrativo (ver [docs/etapa-2.md](docs/etapa-2.md))
 - [ ] Etapa 3 — PWA para repartidores
 - [ ] Etapa 4 — Portal de seguimiento para clientes
 - [ ] Etapa 5 — Notificaciones automáticas y reportes

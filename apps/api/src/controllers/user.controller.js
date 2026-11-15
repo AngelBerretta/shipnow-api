@@ -27,6 +27,14 @@ export async function create(req, res, next) {
   }
 }
 
+export async function update(req, res, next) {
+  try {
+    res.json(await userService.updateUser(req.params.uid, req.body, req.user));
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function remove(req, res, next) {
   try {
     await userService.deleteUser(req.params.uid, req.user);

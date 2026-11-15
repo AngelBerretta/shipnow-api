@@ -5,9 +5,8 @@
   "private": true,
   "type": "module",
   "main": "./src/index.js",
-  "exports": {
-    ".": "./src/index.js"
-  },
+  "types": "./src/index.d.ts",
+  "exports": { ".": { "types": "./src/index.d.ts", "default": "./src/index.js" } },
   "scripts": {
     "test": "node --test"
   },

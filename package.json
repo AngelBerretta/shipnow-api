@@ -19,6 +19,8 @@
     "test:shared": "npm test -w @ruvika/shared",
     "lint": "eslint .",
     "seed:admin": "npm run seed:admin -w @ruvika/api",
+    "dev:admin": "npm run dev -w @ruvika/admin",
+    "build:admin": "npm run build -w @ruvika/admin",    
     "migrate:stage0": "npm run migrate:stage0 -w @ruvika/api"
   },
   "devDependencies": {

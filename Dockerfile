@@ -17,6 +17,7 @@ WORKDIR /app
 # aunque el codigo fuente si haya cambiado.
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
+COPY apps/admin/package.json apps/admin/package.json
 COPY packages/shared/package.json packages/shared/package.json
 RUN npm ci --omit=dev -w @ruvika/api
 

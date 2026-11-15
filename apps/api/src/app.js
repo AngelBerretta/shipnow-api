@@ -9,6 +9,7 @@ import productsRouter from './routes/products.routes.js';
 import mocksRouter from './routes/mocks.routes.js';
 import logsRouter from './routes/logs.routes.js';
 import healthRouter from './routes/health.routes.js';
+import statsRouter from './routes/stats.routes.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 import { setupSwagger } from './config/swagger.config.js';
 import config from './config/index.js';
@@ -17,6 +18,7 @@ import helmet from 'helmet';
 import authRouter from './routes/auth.routes.js';
 import { authenticate, authorize } from './middlewares/auth.js';
 import { ROLES } from './constants/index.js';
+
 
 const app = express();
 
@@ -79,6 +81,7 @@ app.use('/api/users', usersRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/deliveries', deliveriesRouter);
 app.use('/api/products', productsRouter);
+app.use('/api/stats', statsRouter);
 
 // 404 para rutas no definidas
 app.use(notFoundHandler);

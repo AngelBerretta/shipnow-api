@@ -9,6 +9,8 @@ import {
   ForbiddenActionError,
   DuplicateEmailError,
 } from '../errors/index.js';
+import { parseOrThrow } from '../validators/auth.validator.js';
+import { updateUserSchema } from '../validators/user.validator.js';
 
 class UserService {
   /**
@@ -72,6 +74,51 @@ class UserService {
   async createAdminUser({ firstName, lastName, email, password }) {
     this.#assertRequiredFields({ firstName, lastName, email, password });
     return this.#persistUser({ firstName, lastName, email, password, role: ROLES.ADMIN });
+  }
+
+  /**
+   * Edicion parcial (PATCH /api/users/:uid). No se otorga el rol admin, no se
+   * cambia el rol de un admin ni el propio, y un admin no se desactiva a si mismo.
+   */
+  async updateUser(id, body, actor) {
+    const { firstName, lastName, password, isActive, role } = parseOrThrow(updateUserSchema, body);
+
+    const user = await userRepository.findById(id);
+    if (!user) {
+      throw new UserNotFoundError();
+    }
+    const isSelf = Boolean(actor) && String(actor._id) === String(id);
+    const data = {};
+
+    if (firstName !== undefined) data.firstName = firstName;
+    if (lastName !== undefined) data.lastName = lastName;
+
+    if (isActive !== undefined && isActive !== user.isActive) {
+      if (isSelf) {
+        throw new ForbiddenActionError('No podes desactivar tu propia cuenta');
+      }
+      data.isActive = isActive;
+    }
+
+    if (role !== undefined && role !== user.role) {
+      if (!Object.values(ROLES).includes(role)) {
+        throw new InvalidRoleError(role, Object.values(ROLES));
+      }
+      if (role === ROLES.ADMIN) {
+        throw new ForbiddenActionError('No puedes otorgar el rol admin');
+      }
+      if (user.role === ROLES.ADMIN || isSelf) {
+        throw new ForbiddenActionError('No se puede cambiar el rol de un administrador');
+      }
+      data.role = role;
+    }
+
+    if (password !== undefined) data.password = await hashPassword(password);
+
+    if (Object.keys(data).length === 0) {
+      return user;
+    }
+    return userRepository.updateById(id, data);
   }
 
   async deleteUser(id, actor) {

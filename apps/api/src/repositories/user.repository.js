@@ -50,6 +50,10 @@ class UserRepository {
     return User.findByIdAndDelete(id).select('-password');
   }
 
+  async updateById(id, data) {
+    return User.findByIdAndUpdate(id, data, { new: true, runValidators: true }).select('-password');
+  }
+  
   /**
    * Agrega un nuevo elemento a `documents` sin pisar los ya existentes
    * (`$push`), y devuelve el usuario ya actualizado.

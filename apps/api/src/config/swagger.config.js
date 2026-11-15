@@ -99,7 +99,11 @@ const swaggerDefinition = {
     {
       name: 'Auth',
       description: 'Inicio y cierre de sesión, renovación de tokens y perfil del usuario autenticado.',
-    },    
+    },
+    {
+      name: 'Stats',
+      description: 'Métricas operativas para el dashboard administrativo (solo admin).',
+    },        
   ],
 };
 

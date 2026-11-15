@@ -124,6 +124,53 @@
  *             example:
  *               success: false
  *               error: { code: USER_NOT_FOUND, message: Usuario no encontrado }
+ * 
+ *   patch:
+ *     tags: [Users]
+ *     summary: Editar usuario
+ *     description: >
+ *       Solo `admin`. Cambio parcial de `firstName`, `lastName`, `role`, `password` e
+ *       `isActive` (baja lógica). No se puede otorgar el rol `admin`, cambiar el rol
+ *       de un admin ni desactivarse a uno mismo (`403`). El email no se edita.
+ *     parameters:
+ *       - $ref: '#/components/parameters/UserId'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName: { type: string }
+ *               lastName: { type: string }
+ *               role: { $ref: '#/components/schemas/Role' }
+ *               password: { type: string, format: password, minLength: 8 }
+ *               isActive: { type: boolean }
+ *     responses:
+ *       200:
+ *         description: Usuario actualizado.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Datos inválidos, rol inexistente o id con formato inválido.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Operación no permitida sobre ese usuario.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: No existe un usuario con ese ID.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *
  *   delete:
  *     tags: [Users]

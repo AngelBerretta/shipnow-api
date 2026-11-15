@@ -11,6 +11,7 @@
     "test": "mocha",
     "test:watch": "mocha --watch",
     "seed:admin": "node scripts/seed-admin.js",
+    "openapi:export": "node scripts/export-openapi.js",
     "migrate:stage0": "node scripts/migrate-stage0.js"
   },
   "keywords": [

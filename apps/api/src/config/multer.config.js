@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { InvalidFileTypeError } from '../errors/file.errors.js';
 import logger from './logger.config.js';
+import config from './env.config.js';
 
 /**
  * multer.config.js
@@ -31,11 +32,16 @@ const DELIVERY_PROOFS_DIR = path.join(UPLOADS_ROOT, 'deliveries');
 // Al igual que LOGS_DIR en logger.config.js: crea la estructura de
 // carpetas al arrancar si todavia no existe, para que el primer POST
 // no falle por una carpeta faltante.
-[UPLOADS_ROOT, USER_DOCUMENTS_DIR, DELIVERY_PROOFS_DIR].forEach((dir) => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-});
+const isRemoteStorage = config.storage.driver === 'r2';
+
+// Solo con disco local hace falta la estructura de carpetas.
+if (!isRemoteStorage) {
+  [UPLOADS_ROOT, USER_DOCUMENTS_DIR, DELIVERY_PROOFS_DIR].forEach((dir) => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+  });
+}
 
 /** Tamaño máximo por archivo. */
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
@@ -68,6 +74,9 @@ function buildDiskStorage(destinationDir) {
   });
 }
 
+/** En R2 el archivo queda en memoria y lo sube el Service (ver utils/fileStorage.js). */
+const storageFor = (dir) => (isRemoteStorage ? multer.memoryStorage() : buildDiskStorage(dir));
+
 /**
  * Valida el tipo MIME del archivo. Al rechazarlo con un `ApiError`
  * (en vez de `false`), Multer lo propaga tal cual a `next(error)`, y
@@ -99,7 +108,7 @@ const baseOptions = {
  * (traducido por errorHandler.js a `UnexpectedFileFieldError`).
  */
 export const userDocumentUpload = multer({
-  storage: buildDiskStorage(USER_DOCUMENTS_DIR),
+  storage: storageFor(USER_DOCUMENTS_DIR),
   ...baseOptions,
 }).single('file');
 
@@ -108,7 +117,7 @@ export const userDocumentUpload = multer({
  * (POST /api/deliveries/:did/proof). Misma convención de campo ("file").
  */
 export const deliveryProofUpload = multer({
-  storage: buildDiskStorage(DELIVERY_PROOFS_DIR),
+  storage: storageFor(USER_DOCUMENTS_DIR),
   ...baseOptions,
 }).single('file');
 

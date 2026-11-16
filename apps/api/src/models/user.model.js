@@ -36,6 +36,11 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  // Solo aplica a repartidores: el interruptor "disponible / no disponible" de la app.
+  isAvailable: {
+    type: Boolean,
+    default: true
+  },  
   documents: {
     type: [fileMetadataSchema],
     default: []

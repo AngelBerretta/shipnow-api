@@ -1,7 +1,6 @@
-import path from 'path';
 import userRepository from '../repositories/user.repository.js';
 import deliveryRepository from '../repositories/delivery.repository.js';
-import { removeUploadedFile } from '../utils/fileStorage.js';
+import { persistUpload, discardUpload, USER_DOCUMENTS_FOLDER, DELIVERY_PROOFS_FOLDER } from '../utils/fileStorage.js';
 import { DOCUMENT_TYPES } from '../constants/index.js';
 import logger from '../config/logger.config.js';
 import {
@@ -14,17 +13,14 @@ import {
 import { assertAllowed, canModifyDelivery } from '../policies/access.policy.js';
 
 /**
- * Arma el subdocumento de metadatos a partir del objeto `file` que
- * Multer deja en `req.file`. Nunca se persiste el archivo en sí: solo
- * esta informacion (ver `fileMetadata.schema.js`).
+ * Arma el subdocumento de metadatos. `stored` es lo que devolvio persistUpload:
+ * en local la ruta relativa en disco, en R2 la clave del objeto en el bucket.
  */
-function buildFileMetadata(file, documentType) {
+function buildFileMetadata(file, documentType, stored) {
   return {
     originalName: file.originalname,
-    storedName: file.filename,
-    // Ruta relativa a la raiz del proyecto (no la ruta absoluta del
-    // filesystem del servidor, que no le sirve de nada al cliente).
-    path: path.relative(process.cwd(), file.path),
+    storedName: stored.storedName,
+    path: stored.path,
     mimeType: file.mimetype,
     size: file.size,
     documentType,
@@ -44,6 +40,7 @@ class UploadService {
       throw new FileRequiredError('El archivo es obligatorio (campo "file")');
     }
 
+    let stored = null;
     try {
       if (!documentType) {
         throw new ValidationError('El tipo de documento es obligatorio');
@@ -57,34 +54,27 @@ class UploadService {
         throw new UserNotFoundError();
       }
 
-      const metadata = buildFileMetadata(file, documentType);
+      stored = await persistUpload(file, USER_DOCUMENTS_FOLDER);
+      const metadata = buildFileMetadata(file, documentType, stored);
       const updatedUser = await userRepository.addDocument(userId, metadata);
 
       logger.info(`Documento "${metadata.originalName}" (${documentType}) cargado para el usuario ${userId}`);
 
       return updatedUser;
     } catch (error) {
-      // El archivo ya quedo escrito en disco por Multer antes de llegar
-      // aca: si la validacion de negocio falla, se descarta para no
-      // dejarlo aislado sin ninguna entidad asociada.
-      await removeUploadedFile(file.path);
+      await discardUpload(file, stored);
       logger.warning(`Carga de documento descartada para el usuario ${userId}: ${error.message}`);
       throw error;
     }
   }
 
-  /**
-   * Comprobante asociado a una entrega (foto, firma del cliente, etc).
-   * `documentType` es opcional: si no se envia, se asume
-   * `DOCUMENT_TYPES.DELIVERY_PROOF`. Si se envia, igual debe pertenecer
-   * al enum.
-   */
-async uploadDeliveryProof(deliveryId, file, documentType, actor) {
+  async uploadDeliveryProof(deliveryId, file, documentType, actor) {
     if (!file) {
       throw new FileRequiredError('El archivo es obligatorio (campo "file")');
     }
 
     const resolvedType = documentType || DOCUMENT_TYPES.DELIVERY_PROOF;
+    let stored = null;
 
     try {
       if (!Object.values(DOCUMENT_TYPES).includes(resolvedType)) {
@@ -95,19 +85,21 @@ async uploadDeliveryProof(deliveryId, file, documentType, actor) {
       if (!delivery) {
         throw new DeliveryNotFoundError();
       }
-      assertAllowed(!actor || canModifyDelivery(actor, delivery), 'Solo podes subir comprobantes de tus propias entregas');      
-      const metadata = buildFileMetadata(file, resolvedType);
+      assertAllowed(!actor || canModifyDelivery(actor, delivery), 'Solo podes subir comprobantes de tus propias entregas');
+
+      stored = await persistUpload(file, DELIVERY_PROOFS_FOLDER);
+      const metadata = buildFileMetadata(file, resolvedType, stored);
       const updatedDelivery = await deliveryRepository.addDocument(deliveryId, metadata);
 
       logger.info(`Comprobante "${metadata.originalName}" asociado a la entrega ${deliveryId}`);
 
       return updatedDelivery;
     } catch (error) {
-      await removeUploadedFile(file.path);
+      await discardUpload(file, stored);
       logger.warning(`Carga de comprobante descartada para la entrega ${deliveryId}: ${error.message}`);
       throw error;
     }
   }
-}
+}  
 
 export default new UploadService();

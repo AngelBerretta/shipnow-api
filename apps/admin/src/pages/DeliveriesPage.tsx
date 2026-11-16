@@ -5,7 +5,7 @@ import {
   Button, confirmAction, DeliveryStatusBadge, EmptyState, ErrorBanner, Field, Loading, Modal, PageHeader, Pagination, PriorityBadge, Select, Table, Td, Th,
 } from '../components/ui';
 import { api, errorMessage } from '../lib/api';
-import { DELIVERY_STATUS_LABEL, formatDateTime, fullName, nextDeliveryStatus, populated, PRIORITY_LABEL } from '../lib/format';
+import { DELIVERY_STATUS_LABEL, driverLabel, formatDateTime, fullName, nextDeliveryStatus, populated, PRIORITY_LABEL } from '../lib/format';
 import { useUsersByRole } from '../lib/queries';
 import type { Delivery, DeliveryStatus, Order, Page, Priority } from '../lib/types';
 
@@ -43,7 +43,7 @@ function NewDeliveryModal({ onClose }: { onClose: () => void }) {
         <Field label="Repartidor">
           <Select value={driver} onChange={(event) => setDriver(event.target.value)}>
             <option value="">Elegí un repartidor…</option>
-            {drivers.data?.map((u) => <option key={u._id} value={u._id}>{fullName(u)}</option>)}
+            {drivers.data?.map((u) => <option key={u._id} value={u._id}>{driverLabel(u)}</option>)}
           </Select>
         </Field>
         <Field label="Prioridad">

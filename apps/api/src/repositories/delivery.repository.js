@@ -1,5 +1,8 @@
 import Delivery from '../models/delivery.model.js';
 
+// El repartidor necesita el nombre del cliente (no su email): populate anidado del pedido.
+const ORDER_WITH_CUSTOMER = { path: 'order', populate: { path: 'customer', select: 'firstName lastName' } };
+
 /**
  * DeliveryRepository
  * Unico lugar de la aplicacion que conoce Mongoose/MongoDB para la entidad Delivery.
@@ -12,7 +15,7 @@ class DeliveryRepository {
    */
   async findAll(filter = {}, { skip = 0, limit = 0 } = {}) {
     let query = Delivery.find(filter)
-      .populate('order')
+      .populate(ORDER_WITH_CUSTOMER)
       .populate('driver', 'firstName lastName email role')
       .sort({ createdAt: -1 });
     if (limit > 0) {
@@ -27,7 +30,7 @@ class DeliveryRepository {
 
   async findById(id) {
     return Delivery.findById(id)
-      .populate('order')
+      .populate(ORDER_WITH_CUSTOMER)
       .populate('driver', 'firstName lastName email role');
   }
 
@@ -62,7 +65,7 @@ class DeliveryRepository {
    */
   async addDocument(id, documentData) {
     return Delivery.findByIdAndUpdate(id, { $push: { documents: documentData } }, { new: true, runValidators: true })
-      .populate('order')
+      .populate(ORDER_WITH_CUSTOMER)
       .populate('driver', 'firstName lastName email role');
   }
 

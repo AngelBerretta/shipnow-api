@@ -10,7 +10,7 @@ import {
   DuplicateEmailError,
 } from '../errors/index.js';
 import { parseOrThrow } from '../validators/auth.validator.js';
-import { updateUserSchema } from '../validators/user.validator.js';
+import { updateUserSchema, availabilitySchema } from '../validators/user.validator.js';
 
 class UserService {
   /**
@@ -119,6 +119,12 @@ class UserService {
       return user;
     }
     return userRepository.updateById(id, data);
+  }
+
+  /** El repartidor autenticado marca si esta disponible para recibir entregas nuevas. */
+  async setAvailability(actor, body) {
+    const { isAvailable } = parseOrThrow(availabilitySchema, body);
+    return userRepository.updateById(actor._id, { isAvailable });
   }
 
   async deleteUser(id, actor) {

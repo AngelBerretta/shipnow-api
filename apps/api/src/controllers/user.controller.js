@@ -43,3 +43,11 @@ export async function remove(req, res, next) {
     next(error);
   }
 }
+
+export async function setAvailability(req, res, next) {
+  try {
+    res.json(await userService.setAvailability(req.user, req.body));
+  } catch (error) {
+    next(error);
+  }
+}

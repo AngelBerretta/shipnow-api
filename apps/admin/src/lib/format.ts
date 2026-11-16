@@ -57,3 +57,7 @@ export const canCancelOrder = (status: OrderStatus) => getAllowedTransitions(ORD
 /** Las referencias vienen populadas (objeto) o como id (string): devuelve el objeto o null. */
 export const populated = <T extends object>(value: T | string | null | undefined): T | null =>
   value && typeof value === 'object' ? value : null;
+
+/** Nombre del repartidor para los selectores, avisando si se marcó como no disponible. */
+export const driverLabel = (user: { firstName: string; lastName: string; isAvailable?: boolean }) =>
+  `${fullName(user)}${user.isAvailable === false ? ' · no disponible' : ''}`;

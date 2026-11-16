@@ -13,3 +13,8 @@ export const updateUserSchema = z.object({
   isActive: z.boolean({ error: 'isActive debe ser true o false' }).optional(),
   role: z.string().optional(),
 });
+
+/** Cuerpo de PATCH /api/users/me/availability (interruptor del repartidor). */
+export const availabilitySchema = z.object({
+  isAvailable: z.boolean({ error: 'isAvailable debe ser true o false' }),
+});

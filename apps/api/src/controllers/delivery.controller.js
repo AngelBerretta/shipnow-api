@@ -44,3 +44,11 @@ export async function remove(req, res, next) {
     next(error);
   }
 }
+
+export async function getMine(req, res, next) {
+  try {
+    res.json(await deliveryService.getMyDeliveries(req.query, req.user));
+  } catch (error) {
+    next(error);
+  }
+}

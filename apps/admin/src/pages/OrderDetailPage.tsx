@@ -6,7 +6,7 @@ import {
 } from '../components/ui';
 import { api, errorMessage } from '../lib/api';
 import {
-  canCancelOrder, DELIVERY_STATUS_LABEL, EVENT_LABEL, formatDateTime, formatMoney, fullName, nextDeliveryStatus, ORDER_STATUS_LABEL, populated, PRIORITY_LABEL,
+  canCancelOrder, DELIVERY_STATUS_LABEL, EVENT_LABEL, driverLabel, formatDateTime, formatMoney, fullName, nextDeliveryStatus, ORDER_STATUS_LABEL, populated, PRIORITY_LABEL,
 } from '../lib/format';
 import { useUsersByRole } from '../lib/queries';
 import type { Delivery, Order, OrderTimeline, Priority } from '../lib/types';
@@ -126,7 +126,7 @@ export default function OrderDetailPage() {
                 <div className="min-w-48 flex-1">
                   <Select aria-label="Repartidor" value={driverId} onChange={(event) => setDriverId(event.target.value)}>
                     <option value="">Elegí un repartidor…</option>
-                    {drivers.data?.map((user) => <option key={user._id} value={user._id}>{fullName(user)}</option>)}
+                    {drivers.data?.map((user) => <option key={user._id} value={user._id}>{driverLabel(user)}</option>)}
                   </Select>
                 </div>
                 <Select aria-label="Prioridad de la entrega" className="w-32" value={priority} onChange={(event) => setPriority(event.target.value as Priority)}>

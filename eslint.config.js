@@ -3,7 +3,7 @@ import js from '@eslint/js';
 export default [
   {
     // Contenido generado o de terceros: no se lintea.
-    ignores: ['**/node_modules/**', '**/logs/**', '**/uploads/**', '**/coverage/**', '**/dist/**'],
+    ignores: ['**/node_modules/**', '**/logs/**', '**/uploads/**', '**/coverage/**', '**/functions/**', '**/dist/**' ],
   },
   js.configs.recommended,
   {

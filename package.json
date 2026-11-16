@@ -20,7 +20,9 @@
     "lint": "eslint .",
     "seed:admin": "npm run seed:admin -w @ruvika/api",
     "dev:admin": "npm run dev -w @ruvika/admin",
-    "build:admin": "npm run build -w @ruvika/admin",    
+    "build:admin": "npm run build -w @ruvika/admin",
+    "dev:driver": "npm run dev -w @ruvika/driver",
+    "build:driver": "npm run build -w @ruvika/driver",        
     "migrate:stage0": "npm run migrate:stage0 -w @ruvika/api"
   },
   "devDependencies": {

@@ -54,6 +54,34 @@ async getAllDeliveries(query = {}, actor) {
     return { data: deliveries, pagination: buildPaginationMeta(pagination, total) };
   }
 
+  /**
+   * Entregas del repartidor autenticado (GET /api/deliveries/me).
+   * ?active=true -> las que siguen en curso; ?active=false -> las entregadas.
+   * Un ?status= explicito tiene prioridad sobre `active`.
+   */
+  async getMyDeliveries(query = {}, actor) {
+    const pagination = parsePagination(query);
+    const filter = { driver: actor._id };
+
+    if (query.status) {
+      if (!Object.values(DELIVERY_STATUS).includes(query.status)) {
+        throw new InvalidStatusError(query.status, Object.values(DELIVERY_STATUS));
+      }
+      filter.status = query.status;
+    } else if (query.active === 'true') {
+      filter.status = { $ne: DELIVERY_STATUS.DELIVERED };
+    } else if (query.active === 'false') {
+      filter.status = DELIVERY_STATUS.DELIVERED;
+    }
+
+    const [deliveries, total] = await Promise.all([
+      deliveryRepository.findAll(filter, { skip: pagination.skip, limit: pagination.limit }),
+      deliveryRepository.countAll(filter),
+    ]);
+
+    return { data: deliveries, pagination: buildPaginationMeta(pagination, total) };
+  }  
+
   async getDeliveryById(id, actor) {
     const delivery = await deliveryRepository.findById(id);
     if (!delivery) {

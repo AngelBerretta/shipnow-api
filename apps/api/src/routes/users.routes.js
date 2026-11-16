@@ -8,6 +8,8 @@ import { ROLES } from '../constants/index.js';
 const router = Router();
 
 router.get('/', authenticate, authorize(ROLES.ADMIN), userController.getAll);
+// Antes de las rutas con :uid. Solo repartidores.
+router.patch('/me/availability', authenticate, authorize(ROLES.DRIVER), userController.setAvailability);
 router.get('/:uid', authenticate, authorizeSelfOr('uid', ROLES.ADMIN), userController.getById);
 router.post('/', authenticate, authorize(ROLES.ADMIN), userController.create);
 router.patch('/:uid', authenticate, authorize(ROLES.ADMIN), userController.update);

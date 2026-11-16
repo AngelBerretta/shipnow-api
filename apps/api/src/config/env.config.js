@@ -79,6 +79,28 @@ function resolveBcryptRounds() {
   return process.env.NODE_ENV === 'test' ? TEST_BCRYPT_ROUNDS : DEFAULT_BCRYPT_ROUNDS;
 }
 
+/**
+ * Almacenamiento de archivos (Etapa 3). Con las cuatro variables R2_* se usa
+ * Cloudflare R2 (compatible con S3); sin ellas, el disco local (uploads/).
+ * En tests siempre es local.
+ */
+function resolveStorage() {
+  const r2 = {
+    accountId: process.env.R2_ACCOUNT_ID?.trim() || null,
+    accessKeyId: process.env.R2_ACCESS_KEY_ID?.trim() || null,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY?.trim() || null,
+    bucket: process.env.R2_BUCKET?.trim() || null,
+  };
+  const defined = Object.values(r2).filter(Boolean).length;
+  if (defined > 0 && defined < 4) {
+    throw new Error(
+      '[config] Para usar Cloudflare R2 hay que definir R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY y R2_BUCKET (faltan algunas).'
+    );
+  }
+  const useR2 = defined === 4 && process.env.NODE_ENV !== 'test';
+  return Object.freeze({ driver: useR2 ? 'r2' : 'local', r2: Object.freeze(r2) });
+}
+
 function readPositiveInt(name, fallback) {
   const raw = process.env[name];
   if (raw === undefined || raw.trim() === '') return fallback;
@@ -125,6 +147,9 @@ const config = Object.freeze({
   // Cantidad de proxies delante de la API (Render = 1). Necesario para que
   // el rate limit vea la IP real del cliente y no la del proxy.
   trustProxy: Number(process.env.TRUST_PROXY || 0),
+
+  // Donde se guardan los archivos subidos: "local" (uploads/) o "r2" (Cloudflare R2).
+  storage: resolveStorage(),  
 
   // Origen(es) permitido(s) por CORS. "*" (todos) por default, pensado
   // para desarrollo; en producción se espera un dominio explícito.

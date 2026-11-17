@@ -6,7 +6,7 @@ import {
 } from '../components/ui';
 import { api, errorMessage } from '../lib/api';
 import {
-  canCancelOrder, DELIVERY_STATUS_LABEL, EVENT_LABEL, driverLabel, formatDateTime, formatMoney, fullName, nextDeliveryStatus, ORDER_STATUS_LABEL, populated, PRIORITY_LABEL,
+  canCancelOrder, DELIVERY_STATUS_LABEL, EVENT_LABEL, driverLabel, formatDateTime, formatMoney, fullName, nextDeliveryStatus, ORDER_STATUS_LABEL, populated, PRIORITY_LABEL, trackingUrl, whatsappShareUrl,
 } from '../lib/format';
 import { useUsersByRole } from '../lib/queries';
 import type { Delivery, Order, OrderTimeline, Priority } from '../lib/types';
@@ -61,6 +61,7 @@ export default function OrderDetailPage() {
   const d = delivery.data;
   const driver = populated(d?.driver);
   const next = d ? nextDeliveryStatus(d.status) : null;
+  const publicUrl = trackingUrl(o.trackingCode);
   const actionError = [assign, advance, unassign, cancel, remove].map((m) => m.error).find(Boolean);
 
   return (
@@ -88,6 +89,24 @@ export default function OrderDetailPage() {
               <dt className="text-asphalt-600">Cliente</dt><dd>{fullName(o.customer)} <span className="text-asphalt-400">{o.customer?.email}</span></dd>
               <dt className="text-asphalt-600">Dirección</dt><dd>{o.deliveryAddress}</dd>
               <dt className="text-asphalt-600">Total</dt><dd className="font-medium">{formatMoney(o.total)}</dd>
+              {publicUrl && (
+                <>
+                  <dt className="text-asphalt-600">Seguimiento</dt>
+                  <dd className="space-x-3">
+                    <a className="underline decoration-asphalt-200 underline-offset-2" href={publicUrl} target="_blank" rel="noopener noreferrer">
+                      Abrir
+                    </a>
+                    <a
+                      className="underline decoration-asphalt-200 underline-offset-2"
+                      href={whatsappShareUrl(o.trackingCode ?? '', publicUrl)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Compartir por WhatsApp
+                    </a>
+                  </dd>
+                </>
+              )}              
             </dl>
             <ul className="mt-4 divide-y divide-asphalt-100 border-t border-asphalt-100 text-sm">
               {o.items.map((item, index) => (

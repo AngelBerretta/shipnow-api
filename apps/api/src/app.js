@@ -10,6 +10,7 @@ import mocksRouter from './routes/mocks.routes.js';
 import logsRouter from './routes/logs.routes.js';
 import healthRouter from './routes/health.routes.js';
 import statsRouter from './routes/stats.routes.js';
+import publicRouter from './routes/public.routes.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 import { setupSwagger } from './config/swagger.config.js';
 import config from './config/index.js';
@@ -53,6 +54,7 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 // produccion). No requiere base de datos ni expone informacion sensible.
 app.use('/api/health', healthRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/public', publicRouter);
 
 /**
  * Endpoints internos: Swagger UI (/api/docs), generacion de datos de

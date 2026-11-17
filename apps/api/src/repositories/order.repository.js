@@ -45,6 +45,14 @@ class OrderRepository {
     return Order.findById(id);
   }
 
+  /** Pedido por código de seguimiento, con la entrega y el nombre del repartidor (uso: portal público). */
+  async findByTrackingCode(trackingCode) {
+    return Order.findOne({ trackingCode }).populate({
+      path: 'delivery',
+      populate: { path: 'driver', select: 'firstName lastName' },
+    });
+  }  
+
   async create(data) {
     return Order.create(data);
   }

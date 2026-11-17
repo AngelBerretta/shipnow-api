@@ -10,3 +10,24 @@ export const authLimiter = rateLimit({
   legacyHeaders: false,
   handler: (_req, _res, next) => next(new TooManyRequestsError()),
 });
+
+const rateLimitHandler = (_req, _res, next) => next(new TooManyRequestsError());
+
+/** Tope general por IP del seguimiento público (cubre el refresco automático del portal). */
+export const trackingLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: config.tracking.rateLimitMax,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  handler: rateLimitHandler,
+});
+
+/** Cuenta SOLO las consultas que fallan (4xx): frena el barrido de códigos sin molestar a un cliente normal. */
+export const trackingMissLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: config.tracking.missLimitMax,
+  skipSuccessfulRequests: true,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  handler: rateLimitHandler,
+});

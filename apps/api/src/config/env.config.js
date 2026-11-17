@@ -144,6 +144,12 @@ const config = Object.freeze({
     rateLimitMax: readPositiveInt('AUTH_RATE_LIMIT_MAX', process.env.NODE_ENV === 'test' ? 10000 : 20),
   }),
 
+  // Portal público de seguimiento (Etapa 4): límites por IP en /api/public/tracking.
+  tracking: Object.freeze({
+    rateLimitMax: readPositiveInt('TRACKING_RATE_LIMIT_MAX', process.env.NODE_ENV === 'test' ? 10000 : 120),
+    missLimitMax: readPositiveInt('TRACKING_MISS_LIMIT_MAX', process.env.NODE_ENV === 'test' ? 10000 : 20),
+  }),  
+
   // Cantidad de proxies delante de la API (Render = 1). Necesario para que
   // el rate limit vea la IP real del cliente y no la del proxy.
   trustProxy: Number(process.env.TRUST_PROXY || 0),

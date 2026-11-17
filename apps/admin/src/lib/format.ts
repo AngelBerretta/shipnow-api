@@ -61,3 +61,11 @@ export const populated = <T extends object>(value: T | string | null | undefined
 /** Nombre del repartidor para los selectores, avisando si se marcó como no disponible. */
 export const driverLabel = (user: { firstName: string; lastName: string; isAvailable?: boolean }) =>
   `${fullName(user)}${user.isAvailable === false ? ' · no disponible' : ''}`;
+
+const TRACKING_BASE = (import.meta.env.VITE_TRACKING_URL ?? '').replace(/\/$/, '');
+
+/** Enlace público de seguimiento del pedido (null si no hay código o no se configuró VITE_TRACKING_URL). */
+export const trackingUrl = (code?: string) => (code && TRACKING_BASE ? `${TRACKING_BASE}/seguimiento/${code}` : null);
+
+export const whatsappShareUrl = (code: string, url: string) =>
+  `https://wa.me/?text=${encodeURIComponent(`Seguí tu pedido ${code} acá: ${url}`)}`;

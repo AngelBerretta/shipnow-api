@@ -19,6 +19,7 @@ COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/admin/package.json apps/admin/package.json
 COPY apps/driver/package.json apps/driver/package.json
+COPY apps/tracking/package.json apps/tracking/package.json
 COPY packages/shared/package.json packages/shared/package.json
 RUN npm ci --omit=dev -w @ruvika/api
 

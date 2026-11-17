@@ -37,7 +37,7 @@ const swaggerDefinition = {
       '**Autenticación:** `POST /api/auth/login` devuelve un `accessToken` (JWT, 15 min) y ' +
       'un `refreshToken` (rota en cada uso). Enviá el access token en `Authorization: Bearer <token>` ' +
       '(botón *Authorize*). Toda respuesta puede ser `401` (sin token o vencido) o `403` (sin permiso ' +
-      'para ese rol o recurso). Excepto `/api/auth/*` y `/api/health`, todos los endpoints requieren token; ' +
+      'para ese rol o recurso). Excepto `/api/auth/*`, `/api/public/*` y `/api/health`, todos los endpoints requieren token; ' +
       '`/api/mocks` y `/api/logs` son solo para `admin`.',
     contact: {
       name: 'Ruvika',
@@ -103,7 +103,11 @@ const swaggerDefinition = {
     {
       name: 'Stats',
       description: 'Métricas operativas para el dashboard administrativo (solo admin).',
-    },        
+    },
+    {
+      name: 'Tracking',
+      description: 'Seguimiento público de pedidos por código (sin autenticación, datos sanitizados).',
+    },            
   ],
 };
 

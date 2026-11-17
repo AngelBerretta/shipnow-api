@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { cn, Button } from './ui';
+import NotificationBell from './NotificationBell';
 
 const NAV = [
   { to: '/', label: 'Resumen', end: true },
@@ -8,6 +9,7 @@ const NAV = [
   { to: '/deliveries', label: 'Entregas' },
   { to: '/users', label: 'Usuarios' },
   { to: '/products', label: 'Productos' },
+  { to: '/reports', label: 'Reportes' },  
 ];
 
 export default function Layout() {
@@ -44,6 +46,7 @@ export default function Layout() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-end gap-3 border-b border-asphalt-200 bg-white px-6 py-2.5 text-sm">
+          <NotificationBell />
           <span className="text-asphalt-600">
             {user?.firstName} {user?.lastName}
           </span>

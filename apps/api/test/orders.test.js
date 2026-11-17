@@ -112,7 +112,7 @@ describe('Pedidos (/api/orders)', () => {
       const response = await asAdmin().post('/api/orders').send(payload);
 
       expect(response.status).to.equal(201);
-      expect(response.body.message).to.equal('Pedido creado y email enviado');
+      expect(response.body.message).to.equal('Pedido creado');
       expect(response.body.order.status).to.equal(ORDER_STATUS.CREATED);
       expect(response.body.order.total).to.equal(250);
       expect(response.body.order.customer).to.equal(customer._id);

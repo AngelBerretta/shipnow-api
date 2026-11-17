@@ -12,6 +12,7 @@ import UsersPage from './pages/UsersPage';
 
 // El dashboard arrastra recharts (la parte mas pesada del bundle): se carga solo al entrar al Resumen.
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const ReportsPage = lazy(() => import('./pages/ReportsPage'));
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="products" element={<ProductsPage />} />
         <Route path="login" element={<Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="reports" element={<Suspense fallback={<Loading />}><ReportsPage /></Suspense>} />        
       </Route>
     </Routes>
   );

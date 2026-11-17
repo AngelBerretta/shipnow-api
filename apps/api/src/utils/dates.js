@@ -18,3 +18,21 @@ export function lastDayKeys(days, timeZone = DEFAULT_TIMEZONE, now = new Date())
   const today = Date.UTC(year, month - 1, day);
   return Array.from({ length: days }, (_, index) => new Date(today - (days - 1 - index) * DAY_MS).toISOString().slice(0, 10));
 }
+
+const DAY_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/** `true` si es un "YYYY-MM-DD" que existe en el calendario (rechaza 2026-02-30). */
+export function isDayKey(value) {
+  if (typeof value !== 'string' || !DAY_KEY_PATTERN.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+export const dayKeyToMs = (key) => Date.parse(`${key}T00:00:00Z`);
+
+export const addDays = (key, days) => new Date(dayKeyToMs(key) + days * DAY_MS).toISOString().slice(0, 10);
+
+/** Cantidad de días de [from, to], ambos inclusive. */
+export const daysBetween = (from, to) => Math.round((dayKeyToMs(to) - dayKeyToMs(from)) / DAY_MS) + 1;
+
+export const dayKeysBetween = (from, to) => Array.from({ length: daysBetween(from, to) }, (_, index) => addDays(from, index));

@@ -19,9 +19,16 @@ import helmet from 'helmet';
 import authRouter from './routes/auth.routes.js';
 import { authenticate, authorize } from './middlewares/auth.js';
 import { ROLES } from './constants/index.js';
+import notificationsRouter from './routes/notifications.routes.js';
+import reportsRouter from './routes/reports.routes.js';
+import internalRouter from './routes/internal.routes.js';
+import { registerNotificationSubscribers } from './services/notification.service.js';
 
 
 const app = express();
+
+// Los avisos (email, push, Telegram, campana) nacen de los eventos de dominio de los pedidos.
+registerNotificationSubscribers();
 
 // Detras de un proxy (Render) hay que confiar en X-Forwarded-For, o el rate
 // limit vería la IP del proxy y cortaria a todos los clientes juntos.
@@ -55,6 +62,8 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use('/api/health', healthRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/public', publicRouter);
+// Tareas programadas (GitHub Actions): usan su propio secreto, no JWT.
+app.use('/api/internal', internalRouter);
 
 /**
  * Endpoints internos: Swagger UI (/api/docs), generacion de datos de
@@ -84,7 +93,8 @@ app.use('/api/orders', ordersRouter);
 app.use('/api/deliveries', deliveriesRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/stats', statsRouter);
-
+app.use('/api/notifications', notificationsRouter);
+app.use('/api/reports', reportsRouter);
 // 404 para rutas no definidas
 app.use(notFoundHandler);
 

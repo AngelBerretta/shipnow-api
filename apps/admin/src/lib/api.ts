@@ -118,6 +118,27 @@ export async function api<T>(path: string, options: Options = {}): Promise<T> {
   return parse<T>(response);
 }
 
+/** Descarga un archivo protegido: un enlace directo no llevaría el token. */
+export async function download(path: string, query: Query, filename: string) {
+  let response = await send(path, { query });
+  if (response.status === 401 && getStoredRefreshToken()) {
+    try {
+      await refreshSession();
+      response = await send(path, { query });
+    } catch {
+      onSessionLost();
+    }
+  }
+  if (!response.ok) await parse(response); // lanza ApiError con el mensaje de la API
+
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 export const login = async (email: string, password: string) => {
   const session = await parse<AuthSession>(
     await send('/api/auth/login', { method: 'POST', body: { email, password }, auth: false }),

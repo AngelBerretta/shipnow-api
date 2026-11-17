@@ -69,3 +69,6 @@ export const trackingUrl = (code?: string) => (code && TRACKING_BASE ? `${TRACKI
 
 export const whatsappShareUrl = (code: string, url: string) =>
   `https://wa.me/?text=${encodeURIComponent(`Seguí tu pedido ${code} acá: ${url}`)}`;
+
+export const formatMinutes = (minutes: number | null) =>
+  minutes === null ? '—' : minutes < 60 ? `${Math.round(minutes)} min` : `${Math.floor(minutes / 60)} h ${Math.round(minutes % 60)} min`;

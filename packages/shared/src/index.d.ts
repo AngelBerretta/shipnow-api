@@ -20,7 +20,8 @@ export declare const ORDER_EVENT_TYPES: {
   readonly DELIVERY_REMOVED: 'delivery_removed';
 };
 export declare const TRACKING_CODE: { readonly PREFIX: string; readonly ALPHABET: string; readonly LENGTH: number; readonly PATTERN: RegExp };
-
+export declare const NOTIFICATION_CHANNELS: { readonly EMAIL: 'email'; readonly PUSH: 'push'; readonly TELEGRAM: 'telegram'; readonly IN_APP: 'in_app' };
+export declare const NOTIFICATION_STATUS: { readonly PENDING: 'pending'; readonly SENT: 'sent'; readonly FAILED: 'failed'; readonly SKIPPED: 'skipped' };
 export type Transitions = Readonly<Record<string, readonly string[]>>;
 export declare const ORDER_TRANSITIONS: Transitions;
 export declare const DELIVERY_TRANSITIONS: Transitions;

@@ -104,3 +104,18 @@ export const TRACKING_CODE = Object.freeze({
   LENGTH: TRACKING_LENGTH,
   PATTERN: new RegExp(`^${TRACKING_PREFIX}-[${TRACKING_ALPHABET}]{${TRACKING_LENGTH}}$`),
 });
+
+/** Canales y estados de las notificaciones (Etapa 5). */
+export const NOTIFICATION_CHANNELS = Object.freeze({
+  EMAIL: 'email',
+  PUSH: 'push',
+  TELEGRAM: 'telegram',
+  IN_APP: 'in_app',
+});
+
+export const NOTIFICATION_STATUS = Object.freeze({
+  PENDING: 'pending',
+  SENT: 'sent',
+  FAILED: 'failed',
+  SKIPPED: 'skipped',
+});

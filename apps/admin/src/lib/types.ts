@@ -125,3 +125,36 @@ export interface MockSeedResult {
     warnings: string[];
   };
 }
+
+export interface AppNotification {
+  _id: string;
+  type: string;
+  title: string;
+  body: string;
+  data?: { path?: string | null; url?: string | null };
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface NotificationList extends Page<AppNotification> {
+  unreadCount: number;
+}
+
+export interface ReportOverview {
+  generatedAt: string;
+  timezone: string;
+  from: string;
+  to: string;
+  summary: {
+    totalOrders: number;
+    delivered: number;
+    cancelled: number;
+    inProgress: number;
+    fulfillmentRate: number;
+    avgDeliveryMinutes: number | null;
+    deliveriesCompleted: number;
+  };
+  perDay: { date: string; created: number; delivered: number }[];
+  byDriver: { driverId: string; name: string; deliveries: number; delivered: number; fulfillmentRate: number; avgDeliveryMinutes: number | null }[];
+  byStore: { storeId: string | null; name: string; orders: number; delivered: number; cancelled: number; fulfillmentRate: number; revenue: number }[];
+}

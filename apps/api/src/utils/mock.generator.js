@@ -48,7 +48,7 @@ const PRODUCT_NAMES = [
   'Cargador portatil', 'Kit de limpieza',
 ];
 
-const EMAIL_DOMAINS = ['mail.com', 'example.com', 'testmail.com', 'ruvika-test.com'];
+export const EMAIL_DOMAINS = ['mail.com', 'example.com', 'testmail.com', 'ruvika-test.com'];
 
 // ---------------------------------------------------------------------------
 // Helpers de azar

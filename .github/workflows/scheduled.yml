@@ -1,0 +1,30 @@
+name: Tareas programadas
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'   # reintentos de notificaciones (también mantiene despierta la API)
+    - cron: '0 12 * * 1'     # reporte semanal: lunes 12:00 UTC = 09:00 en Argentina
+  workflow_dispatch:
+
+jobs:
+  notifications:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '*/10 * * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Procesar la bandeja de notificaciones
+        run: |
+          curl --fail --silent --show-error --max-time 90 \
+            --retry 4 --retry-delay 20 --retry-connrefused \
+            -X POST -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            "${{ secrets.API_URL }}/api/internal/notifications/process"
+
+  weekly-report:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 12 * * 1'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enviar el reporte semanal
+        run: |
+          curl --fail --silent --show-error --max-time 90 \
+            --retry 4 --retry-delay 20 --retry-connrefused \
+            -X POST -H "x-internal-secret: ${{ secrets.INTERNAL_API_SECRET }}" \
+            "${{ secrets.API_URL }}/api/internal/reports/weekly"

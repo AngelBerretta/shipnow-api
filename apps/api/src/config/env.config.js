@@ -112,6 +112,49 @@ function readPositiveInt(name, fallback) {
 }
 
 /**
+ * Notificaciones (Etapa 5). Cada canal se habilita solo si tiene sus variables;
+ * en tests ninguno se habilita (nunca se sale a internet). `in_app` siempre existe.
+ */
+function resolveNotifications() {
+  const read = (name) => process.env[name]?.trim() || null;
+  const url = (name) => read(name)?.replace(/\/$/, '') ?? null;
+  const live = process.env.NODE_ENV !== 'test';
+
+  const email = { apiKey: read('RESEND_API_KEY'), from: read('EMAIL_FROM') || 'Ruvika <onboarding@resend.dev>' };
+  const push = {
+    publicKey: read('VAPID_PUBLIC_KEY'),
+    privateKey: read('VAPID_PRIVATE_KEY'),
+    subject: read('VAPID_SUBJECT') || 'mailto:admin@ruvika.com',
+  };
+  const telegram = { botToken: read('TELEGRAM_BOT_TOKEN'), adminChatId: read('TELEGRAM_ADMIN_CHAT_ID') };
+
+  if (Boolean(push.publicKey) !== Boolean(push.privateKey)) {
+    throw new Error('[config] Web Push necesita VAPID_PUBLIC_KEY y VAPID_PRIVATE_KEY juntas.');
+  }
+  if (Boolean(telegram.botToken) !== Boolean(telegram.adminChatId)) {
+    throw new Error('[config] Telegram necesita TELEGRAM_BOT_TOKEN y TELEGRAM_ADMIN_CHAT_ID juntas.');
+  }
+
+  return Object.freeze({
+    maxAttempts: readPositiveInt('NOTIFICATION_MAX_ATTEMPTS', 5),
+    trackingUrl: url('TRACKING_URL'),
+    adminUrl: url('ADMIN_URL'),
+    email: Object.freeze({ ...email, enabled: live && Boolean(email.apiKey) }),
+    push: Object.freeze({ ...push, enabled: live && Boolean(push.publicKey) }),
+    telegram: Object.freeze({ ...telegram, enabled: live && Boolean(telegram.botToken) }),
+  });
+}
+
+/** Secreto de los endpoints /api/internal (los llama GitHub Actions). Sin secreto, quedan cerrados. */
+function resolveInternalSecret() {
+  const secret = process.env.INTERNAL_API_SECRET?.trim() || null;
+  if (secret && secret.length < MIN_JWT_SECRET_LENGTH) {
+    throw new Error(`[config] INTERNAL_API_SECRET debe tener al menos ${MIN_JWT_SECRET_LENGTH} caracteres.`);
+  }
+  return secret;
+}
+
+/**
  * Objeto de configuracion unico y congelado. Este es el UNICO lugar de
  * la aplicacion que debe leer directamente de `process.env`. El resto
  * del codigo debe importar y usar este objeto.
@@ -161,11 +204,12 @@ const config = Object.freeze({
   // para desarrollo; en producción se espera un dominio explícito.
   corsOrigin: process.env.CORS_ORIGIN || '*',
 
-  // URL de un proveedor externo de email. Hoy el envío de confirmación
-  // de pedido está SIMULADO con logs (ver order.service.js); se deja
-  // preparada la variable para cuando se integre un proveedor real.
-  emailServiceUrl: process.env.EMAIL_SERVICE_URL || null,
+  // Notificaciones (Etapa 5): email (Resend), push, Telegram y URLs públicas para los enlaces.
+  notifications: resolveNotifications(),
 
+  // Secreto para /api/internal/* (tareas programadas de GitHub Actions).
+  internalApiSecret: resolveInternalSecret(),
+  
   // Fuerza a exponer Swagger, /api/mocks y /api/logs/test aunque
   // NODE_ENV sea "production" (ver criterio completo en app.js).
   enableInternalRoutes: process.env.ENABLE_INTERNAL_ROUTES === 'true',

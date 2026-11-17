@@ -133,7 +133,6 @@ class OrderService {
       `Pedido ${newOrder._id} (${newOrder.trackingCode}) creado correctamente (cliente: ${customer}, total: $${total})`
     );
 
-    this.#sendOrderConfirmationEmail(customer, newOrder._id, total);
 
     const shippingCost = this.#calculateShippingCost(newOrder.items);
 
@@ -320,13 +319,6 @@ class OrderService {
 
   #calculateShippingCost(items) {
     return items.reduce((acc, item) => acc + item.quantity * SHIPPING_COST_PER_UNIT, 0);
-  }
-
-  #sendOrderConfirmationEmail(customerId, orderId, total) {
-    // Simulacion de envio de email (se reemplazaria por un EmailService real
-    // apuntando a config.emailServiceUrl, ver src/config/env.config.js).
-    logger.debug(`[EMAIL SIMULADO] Enviando confirmacion al usuario ${customerId}...`);
-    logger.debug(`[EMAIL SIMULADO] Tu pedido ${orderId} fue creado. Total: $${total}`);
   }
 
   /** Filtro de Mongo con lo que cada rol puede ver. Sin actor (llamada interna) no se acota. */

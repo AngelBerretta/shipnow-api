@@ -21,6 +21,7 @@ process.env.NODE_ENV = 'test';
 dotenv.config({ path: path.resolve(__dirname, '../.env.test'), override: true });
 // JWT_SECRET de testing: si .env.test no lo define se usa este (solo para tests).
 process.env.JWT_SECRET ||= 'test-only-jwt-secret-not-for-production-0123456789';
+process.env.INTERNAL_API_SECRET ||= 'test-only-internal-secret-0123456789abcdef';
 
 if (!process.env.MONGODB_URI || !process.env.MONGODB_URI.includes('test')) {
   // Red de seguridad: si falta .env.test o su MONGODB_URI no "parece" de

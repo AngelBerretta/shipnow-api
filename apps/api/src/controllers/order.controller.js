@@ -33,7 +33,7 @@ export async function create(req, res, next) {
     res.status(201).json({
       order,
       shippingCost,
-      message: 'Pedido creado y email enviado',
+      message: 'Pedido creado',
     });
   } catch (error) {
     next(error);

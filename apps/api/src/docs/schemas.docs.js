@@ -229,7 +229,7 @@
  *           example: 20
  *         message:
  *           type: string
- *           example: Pedido creado y email enviado
+ *           example: Pedido creado
  *
  *     DeliveryStatus:
  *       type: string

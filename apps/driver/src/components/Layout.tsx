@@ -3,6 +3,8 @@ import { useAuth } from '../lib/auth';
 import { useOnline } from '../lib/online';
 import { useSync } from '../offline/SyncProvider';
 import { cn, Notice } from './ui';
+import PushToggle from './PushToggle';
+import { disablePush } from '../lib/push';
 
 function AvailabilityToggle() {
   const { user, patchUser } = useAuth();
@@ -71,7 +73,7 @@ export default function Layout() {
   const { user, logout } = useAuth();
   const { pending } = useSync();
 
-  const onLogout = () => {
+  const onLogout = async () => {
     if (
       pending.length > 0 &&
       !window.confirm(
@@ -80,6 +82,7 @@ export default function Layout() {
     ) {
       return;
     }
+    await disablePush().catch(() => {}); // sin conexión o sin push: no frena el cierre de sesión
     void logout();
   };
 
@@ -94,11 +97,12 @@ export default function Layout() {
               <span className="block text-xs text-asphalt-400">{user?.firstName} {user?.lastName}</span>
             </span>
           </Link>
-          <button type="button" onClick={onLogout} className="min-h-10 rounded-lg px-3 text-sm text-asphalt-200">
+          <button type="button" onClick={() => void onLogout()} className="min-h-10 rounded-lg px-3 text-sm text-asphalt-200">
             Salir
           </button>
         </div>
         <AvailabilityToggle />
+        <PushToggle />
       </header>
 
       <ConnectionBanner />

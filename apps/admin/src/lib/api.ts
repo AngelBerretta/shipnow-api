@@ -22,6 +22,7 @@ export const setSessionLostHandler = (handler: () => void) => {
   onSessionLost = handler;
 };
 export const getStoredRefreshToken = () => localStorage.getItem(REFRESH_KEY);
+export const getAccessToken = () => accessToken;
 
 export function storeSession(session: Pick<AuthSession, 'accessToken' | 'refreshToken'>) {
   accessToken = session.accessToken;

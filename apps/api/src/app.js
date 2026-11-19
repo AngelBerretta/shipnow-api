@@ -23,6 +23,9 @@ import notificationsRouter from './routes/notifications.routes.js';
 import reportsRouter from './routes/reports.routes.js';
 import internalRouter from './routes/internal.routes.js';
 import { registerNotificationSubscribers } from './services/notification.service.js';
+import locationsRouter from './routes/locations.routes.js';
+import integrationsRouter from './routes/integrations.routes.js';
+import inboundRouter from './routes/inbound.routes.js';
 
 
 const app = express();
@@ -42,7 +45,7 @@ app.use(helmet());
 
 // CORS_ORIGIN por env (default "*" en desarrollo). En produccion se
 // espera que apunte al dominio real del frontend, no a "*".
-app.use(cors({ origin: config.corsOrigin }));
+app.use(cors({ origin: config.corsOrigins }));
 
 // Comprime las respuestas (gzip) antes de enviarlas: los listados de
 // pedidos/usuarios/entregas con populate pueden ser pesados, y esto
@@ -54,8 +57,12 @@ app.use(compression());
 // (accidental o intencional) consuma memoria del proceso antes de
 // llegar a ninguna validacion de negocio. Los uploads de archivos van
 // por multipart/form-data (Multer), no por aca (ver multer.config.js).
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+// `rawBody` hace falta para validar la firma HMAC de los webhooks entrantes (WooCommerce).
+const keepRawBody = (req, _res, buf) => {
+  req.rawBody = buf;
+};
+app.use(express.json({ limit: '1mb', verify: keepRawBody }));
+app.use(express.urlencoded({ extended: true, limit: '1mb', verify: keepRawBody }));
 
 // Health check: SIEMPRE disponible, en cualquier entorno (incluida
 // produccion). No requiere base de datos ni expone informacion sensible.
@@ -64,6 +71,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/public', publicRouter);
 // Tareas programadas (GitHub Actions): usan su propio secreto, no JWT.
 app.use('/api/internal', internalRouter);
+app.use('/api/inbound', inboundRouter);
 
 /**
  * Endpoints internos: Swagger UI (/api/docs), generacion de datos de
@@ -95,6 +103,8 @@ app.use('/api/products', productsRouter);
 app.use('/api/stats', statsRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/reports', reportsRouter);
+app.use('/api/locations', locationsRouter);
+app.use('/api/integrations', integrationsRouter);
 // 404 para rutas no definidas
 app.use(notFoundHandler);
 

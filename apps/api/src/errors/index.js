@@ -15,6 +15,7 @@ export {
   OrderNotFoundError,
   DeliveryNotFoundError,
   ProductNotFoundError,
+  IntegrationNotFoundError,
 } from './notFound.errors.js';
 
 export { default as ValidationError } from './ValidationError.js';

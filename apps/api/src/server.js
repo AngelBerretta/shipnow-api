@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import app from './app.js';
 import config from './config/index.js';
 import logger from './config/logger.config.js';
+import { initSocket, disconnectAllSockets } from './realtime/socket.js';
 
 let httpServer;
 
@@ -12,6 +13,7 @@ mongoose
     logger.info('Conexión a MongoDB establecida');
     httpServer = app.listen(config.port, () => {
       logger.info(`Servidor Ruvika escuchando en el puerto ${config.port} [${config.nodeEnv}]`);
+      initSocket(httpServer);
     });
   })
   .catch((error) => {
@@ -68,6 +70,7 @@ function gracefulShutdown(signal) {
       process.exit(1);
     }
   });
+  disconnectAllSockets();
 }
 
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));

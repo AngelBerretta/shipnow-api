@@ -73,6 +73,10 @@ class OrderRepository {
     return Order.distinct('_id', filter);
   }
 
+  async findBySource(integrationId, externalId) {
+    return Order.findOne({ 'source.integration': integrationId, 'source.externalId': externalId });
+  }
+  
 }
 
 export default new OrderRepository();

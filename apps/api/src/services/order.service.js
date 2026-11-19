@@ -25,6 +25,7 @@ import {
   OrderHasActiveDeliveryError,
 } from '../errors/index.js';
 import { assertAllowed, canAccessOrder } from '../policies/access.policy.js';
+import geocodingService from './geocoding.service.js';
 
 const SHIPPING_COST_PER_UNIT = 10;
 const MAX_TRACKING_CODE_ATTEMPTS = 5;
@@ -80,7 +81,7 @@ class OrderService {
     return orderEventService.getTimeline(id);
   }
 
-  async createOrder(input, actor) {
+  async createOrder(input, actor, { source } = {}) {
     const { items, deliveryAddress, priority } = input;
     const { customer, store } = this.#resolveCreationParties(input, actor);
     if (!customer) {
@@ -121,6 +122,7 @@ class OrderService {
       total,
       priority: priority || PRIORITY.NORMAL,
       status: ORDER_STATUS.CREATED,
+      ...(source ? { source } : {}),
     });
 
     await orderEventService.record({
@@ -132,7 +134,8 @@ class OrderService {
     logger.info(
       `Pedido ${newOrder._id} (${newOrder.trackingCode}) creado correctamente (cliente: ${customer}, total: $${total})`
     );
-
+    // Best-effort y en segundo plano (Nominatim: 1 req/s). Alimenta ETA y geocerca.
+    geocodingService.geocodeOrderSoon(newOrder);
 
     const shippingCost = this.#calculateShippingCost(newOrder.items);
 

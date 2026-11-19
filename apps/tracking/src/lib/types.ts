@@ -16,4 +16,7 @@ export interface Tracking {
   address: string;
   driver: { firstName: string; lastInitial: string } | null;
   events: TrackingEvent[];
+  /** Solo viene mientras el pedido va en camino y la posición es reciente. */
+  location?: { lat: number; lng: number; updatedAt: string };
+  eta?: { minutes: number };  
 }

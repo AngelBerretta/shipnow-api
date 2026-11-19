@@ -9,10 +9,12 @@ import OrderDetailPage from './pages/OrderDetailPage';
 import OrdersPage from './pages/OrdersPage';
 import ProductsPage from './pages/ProductsPage';
 import UsersPage from './pages/UsersPage';
+import IntegrationsPage from './pages/IntegrationsPage';
 
 // El dashboard arrastra recharts (la parte mas pesada del bundle): se carga solo al entrar al Resumen.
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
+const LivePage = lazy(() => import('./pages/LivePage'));
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -36,6 +38,8 @@ export default function App() {
         <Route path="deliveries" element={<DeliveriesPage />} />
         <Route path="users" element={<UsersPage />} />
         <Route path="products" element={<ProductsPage />} />
+        <Route path="live" element={<Suspense fallback={<Loading />}><LivePage /></Suspense>} />
+        <Route path="integrations" element={<IntegrationsPage />} />        
         <Route path="login" element={<Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="reports" element={<Suspense fallback={<Loading />}><ReportsPage /></Suspense>} />        

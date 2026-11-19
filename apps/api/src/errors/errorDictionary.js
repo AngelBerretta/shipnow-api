@@ -145,4 +145,8 @@ export const ERROR_DICTIONARY = Object.freeze({
     statusCode: 500,
     message: 'Ocurrio un error al guardar el archivo en el servidor',
   },
+  [ERROR_CODES.INTEGRATION_NOT_FOUND]: { 
+    statusCode: 404, 
+    message: 'Integración no encontrada' 
+  },  
 });

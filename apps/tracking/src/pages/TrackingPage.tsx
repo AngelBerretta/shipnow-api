@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import QrCode from '../components/QrCode';
@@ -18,6 +18,8 @@ import {
 } from '../lib/tracking';
 import type { OrderStatus, TrackingEvent } from '../lib/types';
 
+const TrackingMap = lazy(() => import('../components/TrackingMap'));
+const LIVE_REFRESH_MS = 15_000;
 const REFRESH_MS = 30_000;
 
 /** La API gratuita de Render se duerme: la primera consulta puede tardar cerca de un minuto. */
@@ -124,7 +126,11 @@ export default function TrackingPage() {
     queryKey: ['tracking', normalized],
     queryFn: () => fetchTracking(normalized),
     enabled: valid,
-    refetchInterval: (query) => (isFinal(query.state.data?.status) ? false : REFRESH_MS),
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      if (isFinal(status)) return false;
+      return status === 'in_transit' ? LIVE_REFRESH_MS : REFRESH_MS;
+    },
   });
   const slow = useSlow(tracking.isLoading);
 
@@ -154,6 +160,17 @@ export default function TrackingPage() {
       {tracking.isError && <Notice tone="warn">No pudimos actualizar. Mostramos la última información disponible.</Notice>}
 
       {cancelled ? <Notice tone="bad">Este pedido fue cancelado. Si tenés dudas, contactá al comercio.</Notice> : <Progress status={t.status} />}
+      {t.location && (
+        <Panel title="Tu pedido en el mapa">
+          <Suspense fallback={<Loading label="Cargando mapa…" />}>
+            <TrackingMap lat={t.location.lat} lng={t.location.lng} />
+          </Suspense>
+          <p className="mt-3 text-sm font-medium">
+            {t.eta ? `Llega en aproximadamente ${t.eta.minutes} min.` : 'Calculando el tiempo de llegada…'}
+          </p>
+          <p className="mt-1 text-xs text-asphalt-400">Posición actualizada a las {formatTime(Date.parse(t.location.updatedAt))}</p>
+        </Panel>
+      )}      
 
       <Panel title="Detalles">
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
@@ -170,7 +187,7 @@ export default function TrackingPage() {
 
       <p className="text-center text-xs text-asphalt-400">
         Última actualización: {formatTime(tracking.dataUpdatedAt)}
-        {!isFinal(t.status) && ' · se actualiza solo cada 30 segundos'}
+        {!isFinal(t.status) && ' · se actualiza solo'}
       </p>
 
       <SharePanel code={t.trackingCode} />

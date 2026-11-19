@@ -17,7 +17,12 @@ export default [
         fetch: 'readonly',
         AbortSignal: 'readonly',
         setImmediate: 'readonly',
-        Buffer: 'readonly',        
+        Buffer: 'readonly',
+        URL: 'readonly',
+        URLSearchParams: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        globalThis: 'readonly',        
       },
     },
     rules: {

@@ -5,6 +5,7 @@ import { useSync } from '../offline/SyncProvider';
 import { cn, Notice } from './ui';
 import PushToggle from './PushToggle';
 import { disablePush } from '../lib/push';
+import LocationSharing from './LocationSharing';
 
 function AvailabilityToggle() {
   const { user, patchUser } = useAuth();
@@ -103,6 +104,7 @@ export default function Layout() {
         </div>
         <AvailabilityToggle />
         <PushToggle />
+        <LocationSharing />
       </header>
 
       <ConnectionBanner />

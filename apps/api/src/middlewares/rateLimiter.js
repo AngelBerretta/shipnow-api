@@ -31,3 +31,12 @@ export const trackingMissLimiter = rateLimit({
   legacyHeaders: false,
   handler: rateLimitHandler,
 });
+
+/** Webhooks entrantes: tope por IP por minuto. */
+export const inboundLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: config.integrations.inboundRateLimitMax,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  handler: rateLimitHandler,
+});

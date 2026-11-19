@@ -110,7 +110,10 @@ const swaggerDefinition = {
     },
     { name: 'Notifications', description: 'Campana del panel (in_app) y suscripciones Web Push de cada usuario.' },
     { name: 'Reports', description: 'Reportes de operación y exportación a CSV/PDF (solo admin).' },
-    { name: 'Internal', description: 'Tareas programadas (GitHub Actions). Requieren el header x-internal-secret.' },                
+    { name: 'Internal', description: 'Tareas programadas (GitHub Actions). Requieren el header x-internal-secret.' },
+    { name: 'Locations', description: 'GPS del repartidor y mapa en vivo (el tiempo real va por Socket.IO).' },
+    { name: 'Integrations', description: 'API keys y webhooks salientes por tienda (solo admin).' },
+    { name: 'Inbound', description: 'Webhooks entrantes: crear pedidos desde sistemas externos (API key).' },                    
   ],
 };
 

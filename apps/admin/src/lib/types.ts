@@ -158,3 +158,31 @@ export interface ReportOverview {
   byDriver: { driverId: string; name: string; deliveries: number; delivered: number; fulfillmentRate: number; avgDeliveryMinutes: number | null }[];
   byStore: { storeId: string | null; name: string; orders: number; delivered: number; cancelled: number; fulfillmentRate: number; revenue: number }[];
 }
+
+export interface LivePosition {
+  deliveryId: string;
+  orderId: string;
+  trackingCode: string | null;
+  driverId: string;
+  driverName: string;
+  status: DeliveryStatus;
+  lat: number;
+  lng: number;
+  accuracy?: number;
+  heading?: number;
+  speed?: number;
+  recordedAt: string;
+  eta?: { minutes: number; distanceMeters: number; source: 'osrm' | 'estimate' } | null;
+}
+
+export interface Integration {
+  _id: string;
+  name: string;
+  store: { _id: string; firstName: string; lastName: string } | string;
+  keyPrefix: string;
+  webhookUrl: string | null;
+  events: string[];
+  isActive: boolean;
+  lastUsedAt: string | null;
+  createdAt: string;
+}

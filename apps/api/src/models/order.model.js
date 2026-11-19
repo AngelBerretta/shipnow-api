@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { ORDER_STATUS, PRIORITY } from '../constants/index.js';
+import pointSchema from './point.schema.js';
 
 const orderItemSchema = new mongoose.Schema({
   name: {
@@ -64,6 +65,14 @@ const orderSchema = new mongoose.Schema({
     enum: Object.values(PRIORITY),
     default: PRIORITY.NORMAL
   },
+  // Destino geocodificado (Etapa 6). Sin valor hasta que Nominatim responde.
+  deliveryLocation: { type: pointSchema, default: undefined },
+  geocodeStatus: { type: String, enum: ['ok', 'failed'], default: undefined },
+  // Pedido que entró por una integración (idempotencia por externalId).
+  source: {
+    integration: { type: mongoose.Schema.Types.ObjectId, ref: 'Integration' },
+    externalId: { type: String },
+  },  
   delivery: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Delivery',
@@ -72,6 +81,11 @@ const orderSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+orderSchema.index(
+  { 'source.integration': 1, 'source.externalId': 1 },
+  { unique: true, partialFilterExpression: { 'source.externalId': { $exists: true } } }
+);
 
 const Order = mongoose.model('Order', orderSchema);
 

@@ -154,6 +154,45 @@ function resolveInternalSecret() {
   return secret;
 }
 
+function resolveCorsOrigins() {
+  const raw = process.env.CORS_ORIGIN || '*';
+  return raw === '*' ? '*' : raw.split(',').map((origin) => origin.trim()).filter(Boolean);
+}
+
+/** GPS, geocodificación y rutas (Etapa 6). En tests no se sale a internet y no hay límites de frecuencia. */
+function resolveGeo() {
+  const test = process.env.NODE_ENV === 'test';
+  const read = (name) => process.env[name]?.trim() || null;
+  const url = (name, fallback) => (read(name) ?? fallback).replace(/\/$/, '');
+  return Object.freeze({
+    userAgent: read('GEO_USER_AGENT') || 'Ruvika/1.0 (admin@ruvika.com)',
+    geocoder: Object.freeze({
+      enabled: !test && process.env.GEOCODING_ENABLED !== 'false',
+      url: url('NOMINATIM_URL', 'https://nominatim.openstreetmap.org'),
+      countryCodes: read('GEOCODER_COUNTRY_CODES') || 'ar',
+    }),
+    routing: Object.freeze({
+      enabled: !test && process.env.ROUTING_ENABLED !== 'false',
+      url: url('OSRM_URL', 'https://router.project-osrm.org'),
+    }),
+    tracking: Object.freeze({
+      minIntervalMs: test ? 0 : readPositiveInt('LOCATION_MIN_INTERVAL_SECONDS', 5) * 1000,
+      persistIntervalMs: test ? 0 : readPositiveInt('LOCATION_PERSIST_SECONDS', 15) * 1000,
+      staleSeconds: readPositiveInt('LOCATION_STALE_SECONDS', 300),
+      geofenceMeters: readPositiveInt('GEOFENCE_METERS', 300),
+    }),
+  });
+}
+
+function resolveIntegrations() {
+  const test = process.env.NODE_ENV === 'test';
+  return Object.freeze({
+    webhooksEnabled: !test,
+    webhookTimeoutMs: readPositiveInt('WEBHOOK_TIMEOUT_SECONDS', 10) * 1000,
+    inboundRateLimitMax: readPositiveInt('INBOUND_RATE_LIMIT_MAX', test ? 10000 : 60),
+  });
+}
+
 /**
  * Objeto de configuracion unico y congelado. Este es el UNICO lugar de
  * la aplicacion que debe leer directamente de `process.env`. El resto
@@ -203,6 +242,10 @@ const config = Object.freeze({
   // Origen(es) permitido(s) por CORS. "*" (todos) por default, pensado
   // para desarrollo; en producción se espera un dominio explícito.
   corsOrigin: process.env.CORS_ORIGIN || '*',
+  // Mismos orígenes como lista (CORS_ORIGIN admite varios separados por coma).
+  corsOrigins: resolveCorsOrigins(),
+  geo: resolveGeo(),
+  integrations: resolveIntegrations(),  
 
   // Notificaciones (Etapa 5): email (Resend), push, Telegram y URLs públicas para los enlaces.
   notifications: resolveNotifications(),

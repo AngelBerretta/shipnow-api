@@ -111,6 +111,7 @@ export const NOTIFICATION_CHANNELS = Object.freeze({
   PUSH: 'push',
   TELEGRAM: 'telegram',
   IN_APP: 'in_app',
+  WEBHOOK: 'webhook',
 });
 
 export const NOTIFICATION_STATUS = Object.freeze({
@@ -119,3 +120,16 @@ export const NOTIFICATION_STATUS = Object.freeze({
   FAILED: 'failed',
   SKIPPED: 'skipped',
 });
+
+/** Estados en los que el repartidor comparte ubicación. */
+export const TRACKABLE_DELIVERY_STATUSES = Object.freeze([
+  DELIVERY_STATUS.ASSIGNED,
+  DELIVERY_STATUS.PICKED_UP,
+  DELIVERY_STATUS.IN_TRANSIT,
+]);
+
+/** Eventos a los que se puede suscribir un webhook saliente. */
+export const WEBHOOK_EVENTS = Object.freeze([
+  'order.created', 'order.assigned', 'order.picked_up', 'order.in_transit',
+  'order.delivered', 'order.cancelled', 'order.arriving',
+]);

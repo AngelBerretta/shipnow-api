@@ -2,6 +2,7 @@ import { NOTIFICATION_CHANNELS as CH, NOTIFICATION_STATUS } from '../constants/i
 import email from './email.channel.js';
 import push from './push.channel.js';
 import telegram from './telegram.channel.js';
+import webhook from './webhook.channel.js';
 
 /**
  * Registro de canales. Cada uno expone `isEnabled()` y `send(notification)`, que devuelve
@@ -14,4 +15,5 @@ export const channels = {
   [CH.TELEGRAM]: telegram,
   // La fila ya es el aviso: la lee la campana del panel.
   [CH.IN_APP]: { isEnabled: () => true, send: async () => ({ status: NOTIFICATION_STATUS.SENT }) },
+  [CH.WEBHOOK]: webhook,
 };

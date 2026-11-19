@@ -3,7 +3,8 @@ import pushSubscriptionRepository from '../repositories/pushSubscription.reposit
 import orderRepository from '../repositories/order.repository.js';
 import userRepository from '../repositories/user.repository.js';
 import { channels } from '../notifications/index.js';
-import { customerMessage, adminMessage, driverMessage } from '../notifications/templates.js';
+import integrationRepository from '../repositories/integration.repository.js';
+import { customerMessage, adminMessage, driverMessage, webhookPayload } from '../notifications/templates.js';
 import { EMAIL_DOMAINS as MOCK_EMAIL_DOMAINS } from '../utils/mock.generator.js';
 import { onDomainEvent, DOMAIN_EVENTS } from '../utils/domainEvents.js';
 import { parsePagination, buildPaginationMeta } from '../utils/pagination.js';
@@ -46,9 +47,8 @@ class NotificationService {
   /** Suscriptor del evento `order.event`: decide a quién avisar y deja los avisos en la bandeja. */
   async handleOrderEvent(event) {
     const key = keyOf(event);
-    const rule = key && RULES[key];
-    if (!rule) return [];
-
+    if (!key) return [];
+    const rule = RULES[key] ?? {}; // `picked_up` no avisa a nadie, pero sí dispara webhooks
     const order = await orderRepository.findById(event.order);
     if (!order) return [];
 
@@ -99,7 +99,7 @@ class NotificationService {
         });
       }
     }
-
+    jobs.push(...(await this.#webhookJobs(order, key, eventId)));
     return this.enqueue(jobs);
   }
 
@@ -125,6 +125,54 @@ class NotificationService {
     this.#dispatchSoon(created.filter((row) => row.channel !== CH.IN_APP).map((row) => row._id));
     return created;
   }
+
+  /** Geocerca: el repartidor está cerca del destino. Cliente (email), admins (campana) e integraciones. */
+  async notifyArriving(orderId) {
+    const order = await orderRepository.findById(orderId);
+    if (!order) return [];
+
+    const base = { order: order._id, type: 'order_arriving' };
+    const jobs = [];
+
+    if (order.customer?.email && !isMockEmail(order.customer.email)) {
+      const message = customerMessage('arriving', order);
+      jobs.push({
+        ...base,
+        user: order.customer._id,
+        channel: CH.EMAIL,
+        title: message.title,
+        body: message.body,
+        data: { ...message.data, to: order.customer.email },
+        dedupeKey: `arriving:${order._id}:email`,
+      });
+    }
+
+    const message = adminMessage('arriving', order);
+    const admins = await userRepository.findAll({ role: ROLES.ADMIN, isActive: true });
+    admins.forEach((admin) =>
+      jobs.push({ ...base, user: admin._id, channel: CH.IN_APP, title: message.title, body: message.body, data: message.data, dedupeKey: `arriving:${order._id}:${admin._id}:in_app` })
+    );
+
+    jobs.push(...(await this.#webhookJobs(order, 'arriving', `arriving:${order._id}`)));
+    return this.enqueue(jobs);
+  }
+
+  /** Un aviso `webhook` por cada integración activa de la tienda del pedido suscripta al evento. */
+  async #webhookJobs(order, key, eventId) {
+    if (!order.store) return [];
+    const eventName = `order.${key}`;
+    const status = key === 'arriving' ? ORDER_STATUS.IN_TRANSIT : key;
+    const integrations = await integrationRepository.findActiveByStore(order.store, eventName);
+    return integrations.map((integration) => ({
+      user: null,
+      order: order._id,
+      channel: CH.WEBHOOK,
+      type: `webhook_order_${key}`,
+      title: eventName,
+      data: { integration: String(integration._id), event: eventName, payload: webhookPayload(`evt_${eventId}`, eventName, status, order) },
+      dedupeKey: `${eventId}:webhook:${integration._id}`,
+    }));
+  }  
 
   // -------------------------------------------------------------------
   // Envío con reintentos

@@ -30,3 +30,9 @@ export class ProductNotFoundError extends ApiError {
     super(ERROR_CODES.PRODUCT_NOT_FOUND, message);
   }
 }
+
+export class IntegrationNotFoundError extends ApiError {
+  constructor(message) {
+    super(ERROR_CODES.INTEGRATION_NOT_FOUND, message);
+  }
+}

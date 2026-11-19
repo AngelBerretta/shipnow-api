@@ -1,8 +1,10 @@
 import orderRepository from '../repositories/order.repository.js';
 import orderEventRepository from '../repositories/orderEvent.repository.js';
-import { TRACKING_CODE } from '../constants/index.js';
 import { OrderNotFoundError } from '../errors/index.js';
 import { maskAddress } from '../utils/address.js';
+import locationService from './location.service.js';
+import config from '../config/env.config.js';
+import { ORDER_STATUS, TRACKING_CODE } from '../constants/index.js';
 
 class TrackingService {
   /**
@@ -25,7 +27,7 @@ class TrackingService {
     const events = await orderEventRepository.findByOrder(order._id);
     const driver = order.delivery?.driver;
 
-    return {
+    const result = {
       trackingCode: order.trackingCode,
       status: order.status,
       createdAt: order.createdAt,
@@ -37,6 +39,20 @@ class TrackingService {
       // Solo los hechos que cambiaron el estado, sin ids ni actor.
       events: events.filter((e) => e.toStatus).map((e) => ({ status: e.toStatus, occurredAt: e.occurredAt })),
     };
+
+    // La posición del repartidor es pública SOLO mientras el pedido va en camino y si es reciente.
+    // Nunca se devuelve el destino exacto (la dirección pública va sin número de calle).
+    if (order.status === ORDER_STATUS.IN_TRANSIT && order.delivery) {
+      const last = await locationService.getLatest(order.delivery._id);
+      const fresh = last && Date.now() - Date.parse(last.recordedAt) < config.geo.tracking.staleSeconds * 1000;
+      if (fresh) {
+        const round = (n) => Math.round(n * 1e5) / 1e5;
+        result.location = { lat: round(last.lat), lng: round(last.lng), updatedAt: last.recordedAt };
+        const eta = await locationService.etaFor(String(order.delivery._id), last, order.deliveryLocation?.coordinates);
+        if (eta) result.eta = { minutes: eta.minutes };
+      }
+    }
+    return result;
   }
 }
 

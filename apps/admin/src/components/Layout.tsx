@@ -7,9 +7,11 @@ const NAV = [
   { to: '/', label: 'Resumen', end: true },
   { to: '/orders', label: 'Pedidos' },
   { to: '/deliveries', label: 'Entregas' },
+  { to: '/live', label: 'Mapa en vivo' },
   { to: '/users', label: 'Usuarios' },
   { to: '/products', label: 'Productos' },
-  { to: '/reports', label: 'Reportes' },  
+  { to: '/reports', label: 'Reportes' },
+  { to: '/integrations', label: 'Integraciones' },
 ];
 
 export default function Layout() {

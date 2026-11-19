@@ -7,5 +7,11 @@ import tailwindcss from '@tailwindcss/vite';
 // Cloudflare Pages Functions, ver docs/etapa-2.md).
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  server: { port: 5173, proxy: { '/api': 'http://localhost:3000' } },
+  server: {
+    port: 5173,
+    proxy: {
+      '/api': 'http://localhost:3000',
+      '/socket.io': { target: 'http://localhost:3000', ws: true },
+    },
+  },
 });

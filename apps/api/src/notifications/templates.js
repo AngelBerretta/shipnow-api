@@ -39,6 +39,7 @@ const trackingLink = (order) =>
 const CUSTOMER = {
   created: { subject: 'Recibimos tu pedido', text: 'Estamos asignando un repartidor. Te avisamos cuando salga.' },
   in_transit: { subject: 'Tu pedido va en camino', text: 'El repartidor ya salió a entregarlo.' },
+  arriving: { subject: 'Tu repartidor está llegando', text: 'En unos minutos llega con tu pedido.' },
   delivered: { subject: 'Tu pedido fue entregado', text: '¡Gracias por elegirnos!' },
   cancelled: { subject: 'Tu pedido fue cancelado', text: 'Si tenés dudas, contactá al comercio.' },
 };
@@ -63,7 +64,7 @@ export function customerMessage(key, order) {
   };
 }
 
-const ADMIN_TITLE = { created: 'Nuevo pedido', in_transit: 'Pedido en camino', delivered: 'Pedido entregado', cancelled: 'Pedido cancelado' };
+const ADMIN_TITLE = { created: 'Nuevo pedido', in_transit: 'Pedido en camino', arriving: 'Repartidor llegando', delivered: 'Pedido entregado', cancelled: 'Pedido cancelado' };
 
 /** Aviso a administración (campana y Telegram). `path` es la ruta dentro del panel. */
 export function adminMessage(key, order) {
@@ -113,6 +114,24 @@ export function digestMessage(report) {
     }),
     path: '/reports',
     url: adminUrl ? `${adminUrl}/reports` : null,
+  };
+}
+
+/** Cuerpo de un webhook saliente: sin datos personales del cliente. */
+export function webhookPayload(eventId, type, status, order) {
+  const base = config.notifications.trackingUrl;
+  return {
+    id: eventId,
+    type,
+    createdAt: new Date().toISOString(),
+    data: {
+      order: {
+        trackingCode: order.trackingCode ?? null,
+        status,
+        externalId: order.source?.externalId ?? null,
+        trackingUrl: base && order.trackingCode ? `${base}/seguimiento/${order.trackingCode}` : null,
+      },
+    },
   };
 }
 
